@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String       @id @default(cuid())
+  email             String       @unique
+  password          String?
+  name              String?
+  image             String?
+  emailVerified     DateTime?
+  selectedRule      String?      // "50-30-20", "pay-yourself-first", "smart-goal"
+  savingsPercentage Float        @default(20) // For pay-yourself-first rule
+  currency          String       @default("USD") // User's preferred currency
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  // Financial Rule Settings
+  rulePeriod        String       @default("monthly") // "weekly", "monthly", "quarterly", "semi-annual", "annual", "custom"
+  customPeriodDays  Int?         // For custom period in days
+  periodStartDate   DateTime     @default(now()) // When the current period started
+  autoResetEnabled  Boolean      @default(true) // Auto-reset rule calculations at period end
+  
+  // Relations
+  accounts          Account[]
+  sessions          Session[]
+  expenses          Expense[]
+  savingGoals       SavingGoal[]
+  notifications     Notification[]
+  billReminders     BillReminder[]
+  budgets           Budget[]
+  payables          Payable[]
+  notificationPreferences NotificationPreference?
+  rulePeriods       RulePeriod[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  amount    Float
+  type      String
+  category  String
+  date      DateTime
+  notes     String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavingGoal {
+  id        String   @id @default(cuid())
+  name      String
+  target    Float
+  saved     Float    @default(0)
+  deadline  DateTime
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Budget {
+  id       String @id @default(cuid())
+  category String
+  amount   Float
+  period   String @default("monthly") // "weekly", "monthly", "yearly"
+  userId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, category, period])
+}
+
+model BillReminder {
+  id           String   @id @default(cuid())
+  name         String
+  amount       Float?
+  dueDate      DateTime
+  frequency    String   // "weekly", "monthly", "yearly", "one-time"
+  reminderDays Int[]    // Days before due date to send reminders [7, 3, 1]
+  isPaid       Boolean  @default(false)
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // "budget_alert", "bill_reminder", "goal_milestone", "anomaly", "summary"
+  title     String
+  message   String
+  data      Json?    // Additional context data
+  isRead    Boolean  @default(false)
+  priority  String   @default("normal") // "low", "normal", "high", "critical"
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
+}
+
+model NotificationPreference {
+  id              String  @id @default(cuid())
+  emailEnabled    Boolean @default(true)
+  pushEnabled     Boolean @default(true)
+  smsEnabled      Boolean @default(false)
+  summaryFrequency String @default("weekly") // "daily", "weekly", "monthly", "disabled"
+  budgetAlerts    Boolean @default(true)
+  billReminders   Boolean @default(true)
+  goalMilestones  Boolean @default(true)
+  anomalyAlerts   Boolean @default(true)
+  userId          String  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Payable {
+  id          String   @id @default(cuid())
+  name        String   // Name of the person/entity you owe money to
+  amount      Float    // Amount owed
+  description String?  // Description of what the debt is for
+  dueDate     DateTime? // Optional due date for repayment
+  isPaid      Boolean  @default(false) // Track if it's been paid
+  paidAmount  Float    @default(0) // Track partial payments
+  paidDate    DateTime? // Date when fully paid
+  category    String   @default("Personal") // "Personal", "Business", "Loan", etc.
+  priority    String   @default("Medium") // "High", "Medium", "Low"
+  notes       String?  // Additional notes
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isPaid])
+  @@index([userId, dueDate])
+}
+
+model RulePeriod {
+  id           String   @id @default(cuid())
+  userId       String
+  periodType   String   // "weekly", "monthly", "quarterly", etc.
+  startDate    DateTime
+  endDate      DateTime
+  
+  // Financial data for this period
+  totalIncome  Float
+  totalExpenses Float
+  totalSavings Float
+  
+  // Rule-specific calculations stored as JSON
+  ruleData     Json?    // Stores rule-specific calculations (50-30-20 breakdown, etc.)
+  
+  // Performance metrics
+  budgetAdherence Float?  // Percentage of how well budget was followed
+  savingsRate     Float?  // Actual savings rate for the period
+  
+  isComplete   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, startDate])
+  @@index([userId, endDate])
+  @@unique([userId, startDate, endDate])
+}

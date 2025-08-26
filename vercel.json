@@ -1,0 +1,21 @@
+{
+  "buildCommand": "prisma generate && npm run build",
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "NEXTAUTH_URL": "@nextauth_url",
+    "NEXTAUTH_SECRET": "@nextauth_secret"
+  },
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/auth/[...nextauth]/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/expenses/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/goals/route.ts": {
+      "maxDuration": 10
+    }
+  }
+}
