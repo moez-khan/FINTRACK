@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import type { BillReminder, Budget, Expense, SavingGoal, BudgetStatus, NotificationData as TypedNotificationData } from '@/types/notifications';
 
 const prisma = new PrismaClient();
 
@@ -6,7 +7,7 @@ export interface NotificationData {
   type: 'budget_alert' | 'bill_reminder' | 'goal_milestone' | 'anomaly' | 'summary';
   title: string;
   message: string;
-  data?: any;
+  data?: TypedNotificationData;
   priority?: 'low' | 'normal' | 'high' | 'critical';
 }
 
@@ -19,7 +20,7 @@ export class NotificationService {
           type: notification.type,
           title: notification.title,
           message: notification.message,
-          data: notification.data || null,
+          data: notification.data as any || undefined,
           priority: notification.priority || 'normal'
         }
       });
@@ -156,7 +157,7 @@ export class NotificationService {
                   currentAmount: goal.saved,
                   targetAmount: goal.target
                 },
-                priority: celebrationLevel as any
+                priority: celebrationLevel as 'low' | 'normal' | 'high' | 'critical'
               });
             }
           }
@@ -218,11 +219,11 @@ export class NotificationService {
               data: {
                 billId: bill.id,
                 billName: bill.name,
-                amount: bill.amount,
+                amount: bill.amount ?? undefined,
                 dueDate: bill.dueDate,
                 daysUntilDue
               },
-              priority: urgency as any
+              priority: urgency as 'low' | 'normal' | 'high' | 'critical'
             });
           }
         }
@@ -320,7 +321,7 @@ export class NotificationService {
   }
 
   // Immediate notification methods for user actions
-  static async notifyBillReminderCreated(userId: string, billReminder: any) {
+  static async notifyBillReminderCreated(userId: string, billReminder: BillReminder) {
     try {
       const reminderDaysText = billReminder.reminderDays.join(', ');
       const amountText = billReminder.amount ? ` for $${billReminder.amount}` : '';
@@ -332,7 +333,7 @@ export class NotificationService {
         data: {
           billId: billReminder.id,
           billName: billReminder.name,
-          amount: billReminder.amount,
+          amount: billReminder.amount ?? undefined,
           dueDate: billReminder.dueDate,
           frequency: billReminder.frequency,
           action: 'created'
@@ -344,7 +345,7 @@ export class NotificationService {
     }
   }
 
-  static async notifyBillReminderUpdated(userId: string, billReminder: any) {
+  static async notifyBillReminderUpdated(userId: string, billReminder: BillReminder) {
     try {
       const amountText = billReminder.amount ? ` ($${billReminder.amount})` : '';
       
@@ -355,7 +356,7 @@ export class NotificationService {
         data: {
           billId: billReminder.id,
           billName: billReminder.name,
-          amount: billReminder.amount,
+          amount: billReminder.amount ?? undefined,
           action: 'updated'
         },
         priority: 'low'
@@ -365,7 +366,7 @@ export class NotificationService {
     }
   }
 
-  static async notifyBudgetCreated(userId: string, budget: any) {
+  static async notifyBudgetCreated(userId: string, budget: Budget) {
     try {
       await this.createNotification(userId, {
         type: 'budget_alert',
@@ -384,7 +385,7 @@ export class NotificationService {
     }
   }
 
-  static async notifyBudgetUpdated(userId: string, budget: any, isNew: boolean) {
+  static async notifyBudgetUpdated(userId: string, budget: Budget, isNew: boolean) {
     try {
       const title = isNew ? '💰 Budget Created' : '✏️ Budget Updated';
       const action = isNew ? 'created' : 'updated';
@@ -406,7 +407,7 @@ export class NotificationService {
     }
   }
 
-  static async notifyGoalCreated(userId: string, goal: any) {
+  static async notifyGoalCreated(userId: string, goal: SavingGoal) {
     try {
       const progressPercentage = ((goal.saved || 0) / goal.target * 100).toFixed(1);
       
@@ -428,18 +429,19 @@ export class NotificationService {
     }
   }
 
-  static async notifyExpenseAdded(userId: string, expense: any, budgetStatus?: any) {
+  static async notifyExpenseAdded(userId: string, expense: Expense, budgetStatus?: BudgetStatus) {
     try {
       let message = `Added expense of $${expense.amount} for ${expense.category}.`;
       let priority: 'low' | 'normal' | 'high' = 'low';
       
       // If budget status is provided, include budget information
       if (budgetStatus) {
-        const percentage = (budgetStatus.spent / budgetStatus.budget * 100).toFixed(0);
-        if (percentage >= 90) {
+        const percentageNum = (budgetStatus.spent / budgetStatus.budget * 100);
+        const percentage = percentageNum.toFixed(0);
+        if (percentageNum >= 90) {
           message += ` ⚠️ You're now at ${percentage}% of your ${expense.category} budget!`;
           priority = 'high';
-        } else if (percentage >= 75) {
+        } else if (percentageNum >= 75) {
           message += ` You've used ${percentage}% of your ${expense.category} budget.`;
           priority = 'normal';
         }

@@ -16,6 +16,10 @@ export default async function AnalyticsPage() {
     }
   }));
 
+  if (!user) {
+    throw new Error('User not found');
+  }
+
   const userData = {
     id: user.id,
     email: user.email,
@@ -31,7 +35,8 @@ export default async function AnalyticsPage() {
       type: expense.type as 'income' | 'expense',
       date: expense.date.toISOString(),
       createdAt: expense.createdAt.toISOString(),
-      updatedAt: expense.updatedAt.toISOString()
+      updatedAt: expense.updatedAt.toISOString(),
+      notes: expense.notes ?? undefined
     })),
     savingGoals: user.savingGoals.map(goal => ({
       ...goal,

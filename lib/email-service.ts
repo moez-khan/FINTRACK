@@ -94,7 +94,7 @@ export class EmailService {
         amount: expense.amount,
         category: expense.category,
         date: expense.date,
-        notes: expense.notes
+        notes: expense.notes ?? undefined
       }));
 
       // Calculate budget performance

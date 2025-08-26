@@ -21,9 +21,7 @@ interface CalendarHeatmapProps {
 
 export default function CalendarHeatmapNew({ expenses, currency }: CalendarHeatmapProps) {
   const dailyData = expenses.reduce((acc, expense) => {
-    const dateKey = expense.date instanceof Date 
-      ? expense.date.toISOString().split('T')[0]
-      : expense.date.split('T')[0];
+    const dateKey = expense.date.split('T')[0];
     if (!acc[dateKey]) {
       acc[dateKey] = 0;
     }

@@ -15,6 +15,10 @@ export default async function Dashboard() {
       selectedRule: true,
       currency: true,
       savingsPercentage: true,
+      rulePeriod: true,
+      customPeriodDays: true,
+      periodStartDate: true,
+      autoResetEnabled: true,
       expenses: {
         orderBy: { date: 'desc' }
       },

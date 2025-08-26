@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
 import { getPeriodBounds, getNextPeriodStart, isPeriodComplete } from '@/lib/periodUtils';
-import { filterExpensesByPeriod, calculatePeriodIncome } from '@/lib/financeRulesWithPeriod';
+import { filterExpensesByPeriod } from '@/lib/financeRulesWithPeriod';
 
 const prisma = new PrismaClient();
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -169,7 +169,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // Auto-reset endpoint (can be called by a cron job)
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     

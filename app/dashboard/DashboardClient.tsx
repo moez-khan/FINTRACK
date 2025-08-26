@@ -18,8 +18,7 @@ import ToastProvider from '@/components/ToastProvider';
 import { 
   calculate50_30_20, 
   calculatePayYourselfFirst, 
-  calculateSmartGoal, 
-  calculateMonthlyIncome 
+  calculateSmartGoal
 } from '@/lib/financeRules';
 import {
   calculate50_30_20ForPeriod,
@@ -102,7 +101,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
     .reduce((sum, e) => sum + e.amount, 0);
     
   const balance = totalIncome - totalExpenses;
-  const monthlyIncome = calculateMonthlyIncome(expenses);
+  const monthlyIncome = totalIncome; // Use total income from the period
 
   // Get recent transactions (last 5 for compact view)
   const recentTransactions = [...expenses]
@@ -225,12 +224,12 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
     if (selectedRule === '50-30-20') {
       const ruleData = usePeriod 
         ? calculate50_30_20ForPeriod(
-            expenses, 
+            expenses as any, 
             user.rulePeriod as any, 
             new Date(user.periodStartDate!),
             user.customPeriodDays || undefined
           )
-        : calculate50_30_20(monthlyIncome, expenses);
+        : calculate50_30_20(monthlyIncome, expenses as any);
       
       const periodIncome = usePeriod ? ruleData.totalBudget : monthlyIncome;
       
@@ -239,7 +238,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
             <h3 className="text-xl font-bold text-white">50/30/20 Budget Rule</h3>
             <p className="text-white/80 text-sm mt-1">
-              {usePeriod && 'period' in ruleData ? ruleData.period.label + ' Income' : 'Monthly Income'}: {formatCurrency(periodIncome, user.currency as Currency)}
+              {usePeriod && 'period' in ruleData ? (ruleData as any).period.label + ' Income' : 'Monthly Income'}: {formatCurrency(periodIncome, user.currency as Currency)}
             </p>
           </div>
           <div className="p-6 space-y-6">
@@ -287,7 +286,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
     } else if (selectedRule === 'pay-yourself-first') {
       const ruleData = usePeriod
         ? calculatePayYourselfFirstForPeriod(
-            expenses,
+            expenses as any,
             user.savingsPercentage || 20,
             user.rulePeriod as any,
             new Date(user.periodStartDate!),
@@ -296,7 +295,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         : calculatePayYourselfFirst(
             monthlyIncome, 
             user.savingsPercentage || 20, 
-            expenses
+            expenses as any
           );
       
       const periodIncome = usePeriod && 'periodIncome' in ruleData ? ruleData.periodIncome : monthlyIncome;
@@ -377,7 +376,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         );
       }
 
-      const goalData = calculateSmartGoal(primaryGoal, primaryGoal.saved, monthlyIncome);
+      const goalData = calculateSmartGoal(primaryGoal as any, primaryGoal.saved, monthlyIncome);
       
       return (
         <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
@@ -683,7 +682,14 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       />
       {showProfileSettings && (
         <ProfileSettings
-          user={user}
+          user={{
+            id: user.id,
+            email: user.email,
+            name: user.name ?? null,
+            selectedRule: user.selectedRule ?? null,
+            savingsPercentage: user.savingsPercentage || 20,
+            currency: user.currency
+          }}
           onClose={() => setShowProfileSettings(false)}
           onSuccess={async (updatedUser) => {
             setShowProfileSettings(false);

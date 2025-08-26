@@ -67,7 +67,8 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/signin",
-    signUp: "/auth/signup",
+    // Note: NextAuth doesn't have a built-in signUp page config
+    // Signup is handled through the signin page redirect
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

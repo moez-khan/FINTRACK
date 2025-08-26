@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { SUPPORTED_CURRENCIES } from '@/lib/currency';
 import { prisma, executeWithRetry } from '@/lib/prisma-with-retry';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const session = await getServerSession(authOptions);
     

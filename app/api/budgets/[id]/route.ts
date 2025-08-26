@@ -2,21 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@prisma/client';
 import { NotificationService } from '@/lib/notification-service';
+import { authOptions } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-// Helper to get authOptions
-async function getAuthOptions() {
-  const authModule = await import('../../auth/[...nextauth]/route');
-  return authModule.authOptions;
-}
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const authOptions = await getAuthOptions();
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -76,7 +71,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const authOptions = await getAuthOptions();
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {

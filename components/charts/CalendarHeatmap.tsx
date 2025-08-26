@@ -18,9 +18,7 @@ interface CalendarHeatmapProps {
 
 export default function CalendarHeatmap({ expenses, currency }: CalendarHeatmapProps) {
   const dailyData = expenses.reduce((acc, expense) => {
-    const dateKey = expense.date instanceof Date 
-      ? expense.date.toISOString().split('T')[0]
-      : expense.date.split('T')[0];
+    const dateKey = expense.date.split('T')[0];
     if (!acc[dateKey]) {
       acc[dateKey] = 0;
     }
@@ -61,7 +59,7 @@ export default function CalendarHeatmap({ expenses, currency }: CalendarHeatmapP
   };
 
   const calendarDays = generateCalendarDays();
-  const weeks = [];
+  const weeks: any[] = [];
   let currentWeek: typeof calendarDays = [];
 
   calendarDays.forEach((day, index) => {
@@ -102,7 +100,7 @@ export default function CalendarHeatmap({ expenses, currency }: CalendarHeatmapP
         <div className="space-y-1">
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="grid grid-cols-7 gap-1">
-              {week.map((day, dayIndex) => (
+              {week.map((day: any, dayIndex: number) => (
                 <div
                   key={day ? day.dateKey : `empty-${weekIndex}-${dayIndex}`}
                   className={`h-6 rounded ${day ? day.intensity : 'bg-transparent'} ${day ? 'cursor-pointer transition-all hover:scale-110' : ''}`}

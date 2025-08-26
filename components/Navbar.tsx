@@ -175,7 +175,7 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
     <SettingsModal
       isOpen={settingsOpen}
       onClose={() => setSettingsOpen(false)}
-      user={user}
+      user={{ ...user, id: '' }}
     />
     </>
   );

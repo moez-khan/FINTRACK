@@ -18,7 +18,7 @@ interface AreaChartProps {
 
 export default function AreaChart({ expenses, currency }: AreaChartProps) {
   const monthlyData = expenses.reduce((acc, expense) => {
-    const date = expense.date instanceof Date ? expense.date : new Date(expense.date);
+    const date = new Date(expense.date);
     const monthKey = date.toISOString().slice(0, 7);
     if (!acc[monthKey]) {
       acc[monthKey] = 0;
