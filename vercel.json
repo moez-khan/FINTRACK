@@ -1,9 +1,5 @@
 {
   "buildCommand": "prisma generate && npm run build",
-  "env": {
-    "NEXTAUTH_URL": "@nextauth_url",
-    "NEXTAUTH_SECRET": "@nextauth_secret"
-  },
   "framework": "nextjs",
   "regions": ["iad1"],
   "functions": {
