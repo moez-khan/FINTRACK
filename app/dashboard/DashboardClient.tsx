@@ -11,6 +11,7 @@ import EditGoalModal from '@/components/EditGoalModal';
 import ProfileSettings from '@/components/ProfileSettings';
 import PeriodSelector from '@/components/PeriodSelector';
 import PDFExportModal from '@/components/PDFExportModal';
+import DateRangeSelectorModal from '@/components/DateRangeSelectorModal';
 import PeriodAnalytics from '@/components/PeriodAnalytics';
 import BillReminderManager from '@/components/BillReminderManager';
 import SpendingPieChartNew from '@/components/charts/SpendingPieChartNew';
@@ -101,6 +102,9 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
     fileName?: string;
     error?: string;
   }>({ isOpen: false, status: 'generating' });
+  
+  // Date Range Selector state
+  const [showDateRangeSelector, setShowDateRangeSelector] = useState(false);
 
   // Calculate financial metrics
   const totalIncome = expenses
@@ -119,124 +123,54 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // Generate Professional PDF Report
-  const generatePDFReport = async () => {
+  const generatePDFReport = async (startDate?: string, endDate?: string, periodLabel?: string) => {
     try {
       // Show generating modal
       setPdfExportModal({ isOpen: true, status: 'generating' });
+      setShowDateRangeSelector(false);
       
       // Small delay to show the loading state
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Validate expenses data
+      if (!expenses || !Array.isArray(expenses)) {
+        throw new Error('No transaction data available');
+      }
       
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       
-      // PROFESSIONAL HEADER DESIGN
-      // Main header background
-      doc.setFillColor(30, 41, 59); // Slate-800
-      doc.rect(0, 0, pageWidth, 45, 'F');
+      // Filter expenses based on date range
+      let filteredExpenses = expenses;
+      let dateRangeText = 'All Time';
       
-      // Accent stripe
-      doc.setFillColor(59, 130, 246); // Blue-500
-      doc.rect(0, 0, pageWidth, 3, 'F');
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Include the entire end date
+        
+        filteredExpenses = expenses.filter(e => {
+          const expDate = new Date(e.date);
+          return expDate >= start && expDate <= end;
+        });
+        
+        dateRangeText = `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      }
       
-      // Company/App name
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(26);
-      doc.setFont('helvetica', 'bold');
-      doc.text('FINANCIAL STATEMENT', 20, 22);
+      // Calculate metrics for filtered period
+      const filteredIncome = filteredExpenses
+        .filter(e => e.type === 'income')
+        .reduce((sum, e) => sum + e.amount, 0);
+        
+      const filteredExpensesTotal = filteredExpenses
+        .filter(e => e.type === 'expense')
+        .reduce((sum, e) => sum + e.amount, 0);
+        
+      const filteredBalance = filteredIncome - filteredExpensesTotal;
       
-      // Report subtitle
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Personal Finance Analysis Report', 20, 32);
-      
-      // Report metadata (right side)
-      const reportDate = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('REPORT DATE', pageWidth - 85, 18);
-      doc.setFont('helvetica', 'normal');
-      doc.text(reportDate, pageWidth - 85, 25);
-      
-      doc.setFont('helvetica', 'bold');
-      doc.text('ACCOUNT HOLDER', pageWidth - 85, 32);
-      doc.setFont('helvetica', 'normal');
-      doc.text(user.name || user.email.split('@')[0], pageWidth - 85, 39);
-      
-      // Reset colors
-      doc.setTextColor(0, 0, 0);
-      
-      // EXECUTIVE SUMMARY SECTION
-      let currentY = 65;
-      
-      // Section header with background
-      doc.setFillColor(248, 250, 252); // Gray-50
-      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'F');
-      doc.setDrawColor(226, 232, 240); // Gray-200
-      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'S');
-      
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(51, 65, 85); // Slate-700
-      doc.text('EXECUTIVE SUMMARY', 20, currentY + 3);
-      
-      currentY += 25;
-      
-      // Key Performance Indicators (KPI) Table
-      const kpiData = [
-        ['Total Revenue (Income)', formatCurrency(totalIncome, user.currency as Currency), totalIncome > 0 ? '↗' : '→'],
-        ['Total Expenditure', formatCurrency(Math.abs(totalExpenses), user.currency as Currency), totalExpenses > 0 ? '↘' : '→'],
-        ['Net Cash Flow', formatCurrency(balance, user.currency as Currency), balance >= 0 ? '↗' : '↘'],
-        ['Cash Flow Ratio', balance > 0 ? `${((balance / totalIncome) * 100).toFixed(1)}%` : '0%', balance >= 0 ? '↗' : '↘'],
-      ];
-      
-      autoTable(doc, {
-        startY: currentY,
-        head: [['Key Performance Indicator', 'Value', 'Trend']],
-        body: kpiData,
-        theme: 'grid',
-        headStyles: { 
-          fillColor: [59, 130, 246],
-          textColor: 255,
-          fontSize: 11,
-          fontStyle: 'bold'
-        },
-        bodyStyles: {
-          fontSize: 10,
-          cellPadding: 6
-        },
-        columnStyles: {
-          0: { cellWidth: 90, fontStyle: 'normal' },
-          1: { cellWidth: 60, halign: 'right', fontStyle: 'bold' },
-          2: { cellWidth: 20, halign: 'center', fontSize: 12 }
-        },
-        alternateRowStyles: { fillColor: [248, 250, 252] }
-      });
-      
-      // EXPENDITURE ANALYSIS SECTION
-      currentY = (doc as any).lastAutoTable.finalY + 20;
-      
-      // Section header
-      doc.setFillColor(248, 250, 252);
-      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'F');
-      doc.setDrawColor(226, 232, 240);
-      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'S');
-      
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(51, 65, 85);
-      doc.text('EXPENDITURE ANALYSIS BY CATEGORY', 20, currentY + 3);
-      
-      currentY += 25;
-      
-      // Category Analysis with Professional Bar Chart
-      const categoryTotals = expenses
+      // Calculate spending insights for filtered data
+      const categoryTotals = filteredExpenses
         .filter(e => e.type === 'expense')
         .reduce((acc, expense) => {
           const category = expense.category || 'Miscellaneous';
@@ -245,166 +179,445 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         }, {} as Record<string, number>);
       
       const sortedCategories = Object.entries(categoryTotals)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 8);
+        .sort(([,a], [,b]) => b - a);
       
-      // Draw professional bar chart
-      if (sortedCategories.length > 0) {
-        const chartWidth = 140;
-        const chartHeight = 80;
-        const chartX = 25;
-        const chartStartY = currentY;
-        const maxAmount = Math.max(...sortedCategories.map(([,amount]) => amount));
+      const topCategory = sortedCategories[0];
+      const spendingPercentage = topCategory ? ((topCategory[1] / filteredExpensesTotal) * 100).toFixed(1) : '0';
+      
+      // PROFESSIONAL HEADER DESIGN - Matching website gradient
+      // Main header with gradient-like effect (using solid color)
+      doc.setFillColor(99, 102, 241); // Indigo-500
+      doc.rect(0, 0, pageWidth, 60, 'F');
+      
+      // Accent stripe with purple
+      doc.setFillColor(139, 92, 246); // Purple-500
+      doc.rect(0, 57, pageWidth, 3, 'F');
+      
+      // Left side - Company/App info
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text('FINANCIAL STATEMENT', 20, 22);
+      
+      // Report subtitle
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Personal Finance Analysis Report', 20, 32);
+      
+      // Right side - Report metadata
+      const reportDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      // Position right-aligned content properly
+      const rightMargin = 20;
+      const rightStartX = pageWidth - rightMargin;
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REPORT DATE', rightStartX, 18, { align: 'right' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(reportDate, rightStartX, 25, { align: 'right' });
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REPORT PERIOD', rightStartX, 33, { align: 'right' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(dateRangeText, rightStartX, 40, { align: 'right' });
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ACCOUNT HOLDER', rightStartX, 48, { align: 'right' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(user.name || user.email.split('@')[0], rightStartX, 55, { align: 'right' });
+      
+      // Reset colors
+      doc.setTextColor(0, 0, 0);
+      
+      // PAGE 1 - EXECUTIVE DASHBOARD
+      let currentY = 75;
+      
+      // Executive Summary Header with rounded corners
+      doc.setFillColor(99, 102, 241);
+      doc.rect(15, currentY, pageWidth - 30, 12, 'F');
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text('EXECUTIVE FINANCIAL OVERVIEW', pageWidth / 2, currentY + 8, { align: 'center' });
+      
+      currentY += 20;
+      
+      // Key Metrics Cards - 4 column layout
+      const cardWidth = 42;
+      const cardHeight = 25;
+      const cardSpacing = 5;
+      const startX = 20;
+      
+      const metrics = [
+        { label: 'Total Income', value: formatCurrency(filteredIncome, user.currency as Currency), color: [34, 197, 94], icon: '↗' },
+        { label: 'Total Expenses', value: formatCurrency(Math.abs(filteredExpensesTotal), user.currency as Currency), color: [239, 68, 68], icon: '↘' },
+        { label: 'Net Balance', value: formatCurrency(filteredBalance, user.currency as Currency), color: filteredBalance >= 0 ? [34, 197, 94] : [239, 68, 68], icon: filteredBalance >= 0 ? '↗' : '↘' },
+        { label: 'Savings Rate', value: filteredBalance > 0 && filteredIncome > 0 ? `${((filteredBalance / filteredIncome) * 100).toFixed(1)}%` : '0%', color: [99, 102, 241], icon: '=' }
+      ];
+      
+      metrics.forEach((metric, index) => {
+        const x = startX + (index * (cardWidth + cardSpacing));
         
-        // Chart background
-        doc.setFillColor(249, 250, 251);
-        doc.rect(chartX - 5, chartStartY - 5, chartWidth + 10, chartHeight + 20, 'F');
-        doc.setDrawColor(229, 231, 235);
-        doc.rect(chartX - 5, chartStartY - 5, chartWidth + 10, chartHeight + 20, 'S');
+        // Card background
+        doc.setFillColor(250, 250, 251);
+        doc.rect(x, currentY, cardWidth, cardHeight, 'F');
         
-        // Chart title
-        doc.setFontSize(10);
+        // Color accent bar
+        const [r, g, b] = metric.color;
+        doc.setFillColor(r, g, b);
+        doc.rect(x, currentY, cardWidth, 3, 'F');
+        
+        // Metric label
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text(metric.label, x + cardWidth/2, currentY + 9, { align: 'center' });
+        
+        // Metric value
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text('Spending Distribution', chartX, chartStartY - 10);
+        doc.setTextColor(30, 41, 59);
+        doc.text(metric.value, x + cardWidth/2, currentY + 18, { align: 'center' });
         
-        // Draw bars
-        const barWidth = chartWidth / sortedCategories.length - 2;
-        const colors = [
-          [59, 130, 246],   // Blue
-          [16, 185, 129],   // Green
-          [245, 101, 101],  // Red
-          [251, 191, 36],   // Yellow
-          [139, 92, 246],   // Purple
-          [236, 72, 153],   // Pink
-          [20, 184, 166],   // Teal
-          [251, 146, 60]    // Orange
-        ];
-        
-        sortedCategories.forEach(([category, amount], index) => {
-          const barHeight = (amount / maxAmount) * chartHeight;
-          const barX = chartX + (index * (barWidth + 2));
-          const barY = chartStartY + chartHeight - barHeight;
-          
-          // Draw bar
-          const [r, g, b] = colors[index % colors.length];
-          doc.setFillColor(r, g, b);
-          doc.rect(barX, barY, barWidth, barHeight, 'F');
-          
-          // Category label (rotated)
-          doc.setTextColor(100, 116, 139);
-          doc.setFontSize(8);
-          const shortCategory = category.length > 8 ? category.substring(0, 8) + '.' : category;
-          doc.text(shortCategory, barX + barWidth/2 - 8, chartStartY + chartHeight + 8, { angle: 45 });
-        });
-        
-        // Chart legend table
-        const legendData = sortedCategories.map(([category, amount], index) => {
-          const percentage = ((amount / totalExpenses) * 100).toFixed(1);
-          return [
-            category,
-            formatCurrency(amount, user.currency as Currency),
-            `${percentage}%`
-          ];
-        });
-        
+        // Trend icon
+        doc.setFontSize(10);
+        doc.setTextColor(r, g, b);
+        doc.text(metric.icon, x + cardWidth - 5, currentY + 22);
+      });
+      
+      currentY += cardHeight + 15;
+      
+      // SPENDING ANALYSIS SECTION
+      doc.setFillColor(99, 102, 241);
+      doc.rect(15, currentY, pageWidth - 30, 10, 'F');
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text('SPENDING ANALYSIS & INSIGHTS', pageWidth / 2, currentY + 7, { align: 'center' });
+      
+      currentY += 18;
+      
+      // Create spending breakdown table
+      const spendingData = sortedCategories.length > 0 
+        ? sortedCategories.slice(0, 6).map(([category, amount]) => {
+            const percentage = filteredExpensesTotal > 0 ? ((amount / filteredExpensesTotal) * 100).toFixed(1) : '0';
+            const barWidth = filteredExpensesTotal > 0 ? Math.min(40, (amount / filteredExpensesTotal) * 40) : 0;
+            return [category, formatCurrency(amount, user.currency as Currency), `${percentage}%`, barWidth];
+          })
+        : [['No expenses in period', formatCurrency(0, user.currency as Currency), '0%', 0]];
+      
+      // Spending table with visual bars
+      if (spendingData.length > 0) {
         autoTable(doc, {
-          startY: chartStartY + chartHeight + 25,
-          head: [['Category', 'Amount', '% of Total']],
-          body: legendData,
-          theme: 'striped',
-          headStyles: { 
-            fillColor: [71, 85, 105],
-            textColor: 255,
-            fontSize: 10
-          },
-          bodyStyles: {
-            fontSize: 9,
-            cellPadding: 4
-          },
-          columnStyles: {
-            0: { cellWidth: 50 },
-            1: { cellWidth: 40, halign: 'right' },
-            2: { cellWidth: 25, halign: 'center' }
-          },
-          margin: { left: 20, right: 20 }
-        });
+        startY: currentY,
+        head: [['Category', 'Amount', '% of Total', 'Visual Distribution']],
+        body: spendingData.map(([cat, amt, pct]) => [cat, amt, pct, '']),
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [99, 102, 241],
+          textColor: 255,
+          fontSize: 10,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        bodyStyles: {
+          fontSize: 9,
+          cellPadding: 4
+        },
+        columnStyles: {
+          0: { cellWidth: 45 },
+          1: { cellWidth: 45, halign: 'right' },
+          2: { cellWidth: 35, halign: 'center' },
+          3: { cellWidth: 45 }
+        },
+        alternateRowStyles: { fillColor: [245, 243, 255] },
+        margin: { left: 20, right: 20 },
+        didDrawCell: (data) => {
+          // Draw visual bars in the last column
+          if (data.column.index === 3 && data.cell.section === 'body' && data.row.index < spendingData.length) {
+            const barWidth = spendingData[data.row.index][3] as number;
+            if (barWidth > 0) {
+              doc.setFillColor(99, 102, 241);
+              doc.rect(data.cell.x + 2, data.cell.y + 3, barWidth, 6, 'F');
+            }
+          }
+        }
+      });
+        
+        currentY = (doc as any).lastAutoTable.finalY + 15;
+      } else {
+        currentY += 30; // Skip if no data
       }
+      
+      // FINANCIAL RULE COMPLIANCE
+      const selectedRule = user.selectedRule || '50-30-20';
+      doc.setFillColor(239, 246, 255);
+      doc.rect(15, currentY, pageWidth - 30, 35, 'F');
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 58, 138);
+      doc.text(`Active Financial Rule: ${selectedRule.toUpperCase()}`, 20, currentY + 8);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      
+      if (selectedRule === '50-30-20') {
+        doc.text('• Needs (50%): Housing, utilities, groceries, insurance', 25, currentY + 16);
+        doc.text('• Wants (30%): Entertainment, dining out, hobbies', 25, currentY + 22);
+        doc.text('• Savings (20%): Emergency fund, investments, debt repayment', 25, currentY + 28);
+      } else if (selectedRule === 'pay-yourself-first') {
+        const savingsPercentage = user.savingsPercentage || 20;
+        doc.text(`• Target Savings: ${savingsPercentage}% of income`, 25, currentY + 16);
+        const savingsGoal = filteredIncome > 0 ? filteredIncome * savingsPercentage / 100 : 0;
+        const availableForExpenses = filteredIncome > 0 ? filteredIncome * (100 - savingsPercentage) / 100 : 0;
+        doc.text(`• Period Savings Goal: ${formatCurrency(savingsGoal, user.currency as Currency)}`, 25, currentY + 22);
+        doc.text(`• Available for Expenses: ${formatCurrency(availableForExpenses, user.currency as Currency)}`, 25, currentY + 28);
+      }
+      
+      currentY += 45;
+      
+      // KEY OBSERVATIONS
+      doc.setFillColor(255, 247, 237);
+      doc.rect(15, currentY, pageWidth - 30, 45, 'F');
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(180, 83, 9);
+      doc.text('KEY OBSERVATIONS & RECOMMENDATIONS', 20, currentY + 8);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(92, 45, 10);
+      
+      // Generate insights safely
+      const insights = [];
+      try {
+        if (topCategory) {
+          insights.push(`• Highest spending: ${topCategory[0]} (${spendingPercentage}% of expenses)`);
+        }
+        if (filteredBalance < 0) {
+          insights.push(`• Warning: Expenses exceed income by ${formatCurrency(Math.abs(filteredBalance), user.currency as Currency)}`);
+        } else if (filteredBalance > 0) {
+          insights.push(`• Positive cash flow: ${formatCurrency(filteredBalance, user.currency as Currency)} available for savings`);
+        }
+        if (sortedCategories.length > 0 && filteredExpensesTotal > 0) {
+          const avgSpending = filteredExpensesTotal / sortedCategories.length;
+          insights.push(`• Average spending per category: ${formatCurrency(avgSpending, user.currency as Currency)}`);
+        }
+        insights.push(`• Total transactions recorded: ${filteredExpenses.length}`);
+      } catch (insightError) {
+        console.error('Error generating insights:', insightError);
+        insights.push(`• Total transactions recorded: ${filteredExpenses.length}`);
+      }
+      
+      insights.forEach((insight, index) => {
+        doc.text(insight, 25, currentY + 16 + (index * 6));
+      });
       
       // Add new page for transaction history
       doc.addPage();
       
-      // TRANSACTION HISTORY SECTION
-      currentY = 20;
+      // PAGE 2 - TRANSACTION HISTORY
+      // Add header for second page
+      doc.setFillColor(99, 102, 241);
+      doc.rect(0, 0, pageWidth, 40, 'F');
       
-      doc.setFillColor(248, 250, 252);
-      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'F');
-      doc.setDrawColor(226, 232, 240);
-      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'S');
+      // Add accent stripe
+      doc.setFillColor(139, 92, 246);
+      doc.rect(0, 37, pageWidth, 3, 'F');
       
-      doc.setFontSize(14);
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(51, 65, 85);
-      doc.text('TRANSACTION HISTORY', 20, currentY + 3);
+      doc.setTextColor(255, 255, 255);
+      doc.text('TRANSACTION HISTORY', pageWidth / 2, 18, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Detailed record of recent financial activities', pageWidth / 2, 28, { align: 'center' });
+      
+      currentY = 50;
+      
+      // Filter and sort transactions for the period FIRST
+      const filteredTransactions = [...filteredExpenses]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      // Add transaction summary
+      doc.setFillColor(245, 243, 255);
+      doc.rect(15, currentY, pageWidth - 30, 25, 'F');
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(71, 85, 105);
+      doc.text('Transaction Summary', 25, currentY + 8);
+      
+      const incomeTransactions = filteredTransactions.filter(t => t.type === 'income').length;
+      const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense').length;
+      
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text('Recent 20 transactions', 20, currentY + 10);
+      doc.text(`Total Transactions: ${filteredTransactions.length}`, 25, currentY + 16);
+      doc.text(`Income Transactions: ${incomeTransactions}`, 90, currentY + 16);
+      doc.text(`Expense Transactions: ${expenseTransactions}`, 150, currentY + 16);
       
-      currentY += 25;
+      currentY += 35;
       
-      // Transaction table
-      const transactionData = allTransactions
-        .slice(0, 20)
+      // Transaction table with improved styling
+      const transactionData = filteredTransactions
+        .slice(0, 15) // Reduced to 15 to fit better
         .map((transaction, index) => [
           (index + 1).toString(),
-          new Date(transaction.date).toLocaleDateString(),
+          new Date(transaction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           transaction.category,
           transaction.type === 'income' ? 'Credit' : 'Debit',
           formatCurrency(Math.abs(transaction.amount), user.currency as Currency),
-          transaction.notes?.substring(0, 30) || 'N/A'
+          transaction.notes?.substring(0, 25) || '-'
         ]);
       
       autoTable(doc, {
         startY: currentY,
-        head: [['#', 'Date', 'Category', 'Type', 'Amount', 'Description']],
+        head: [['#', 'Date', 'Category', 'Type', 'Amount', 'Notes']],
         body: transactionData,
         theme: 'grid',
         headStyles: { 
-          fillColor: [59, 130, 246],
+          fillColor: [99, 102, 241],
           textColor: 255,
-          fontSize: 9,
-          fontStyle: 'bold'
+          fontSize: 10,
+          fontStyle: 'bold',
+          cellPadding: 5
         },
         bodyStyles: {
-          fontSize: 8,
-          cellPadding: 3
+          fontSize: 9,
+          cellPadding: 4
         },
         columnStyles: {
-          0: { cellWidth: 10, halign: 'center' },
-          1: { cellWidth: 25 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 20, halign: 'center' },
-          4: { cellWidth: 30, halign: 'right' },
-          5: { cellWidth: 55 }
+          0: { cellWidth: 12, halign: 'center' },
+          1: { cellWidth: 28, halign: 'center' },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 25, halign: 'center' },
+          4: { cellWidth: 35, halign: 'right', fontStyle: 'bold' },
+          5: { cellWidth: 30, overflow: 'hidden' }
         },
-        alternateRowStyles: { fillColor: [248, 250, 252] }
+        alternateRowStyles: { fillColor: [245, 243, 255] },
+        margin: { left: 20, right: 20 },
+        tableWidth: 'auto',
+        didDrawCell: (data) => {
+          // Color code the Type column
+          if (data.column.index === 3 && data.cell.section === 'body') {
+            const type = transactionData[data.row.index][3];
+            if (type === 'Credit') {
+              doc.setTextColor(34, 197, 94);
+            } else {
+              doc.setTextColor(239, 68, 68);
+            }
+            doc.text(type, data.cell.x + data.cell.width/2, data.cell.y + data.cell.height/2 + 1, { align: 'center' });
+          }
+        }
       });
       
-      // Professional footer
+      // Add financial health score at bottom of page 2
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+      
+      // Financial Health Score Card
+      doc.setFillColor(239, 246, 255);
+      doc.rect(15, currentY, pageWidth - 30, 30, 'F');
+      
+      // Calculate health score based on filtered data
+      let healthScore = 50; // Base score
+      if (filteredBalance > 0) healthScore += 20;
+      if (filteredBalance > filteredIncome * 0.1) healthScore += 10;
+      if (sortedCategories.length > 0 && sortedCategories[0][1] < filteredIncome * 0.3) healthScore += 10;
+      if (filteredExpenses.length > 10) healthScore += 10; // Active tracking
+      healthScore = Math.min(100, healthScore);
+      
+      // Get health status
+      let healthStatus = '';
+      let statusColor = [];
+      if (healthScore >= 80) {
+        healthStatus = 'Excellent';
+        statusColor = [34, 197, 94];
+      } else if (healthScore >= 60) {
+        healthStatus = 'Good';
+        statusColor = [99, 102, 241];
+      } else if (healthScore >= 40) {
+        healthStatus = 'Fair';
+        statusColor = [251, 191, 36];
+      } else {
+        healthStatus = 'Needs Improvement';
+        statusColor = [239, 68, 68];
+      }
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 58, 138);
+      doc.text('Financial Health Score', 25, currentY + 10);
+      
+      // Score display
+      doc.setFontSize(24);
+      const [sc1, sc2, sc3] = statusColor;
+      doc.setTextColor(sc1, sc2, sc3);
+      doc.text(`${healthScore}`, 25, currentY + 22);
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(`/ 100`, 45, currentY + 22);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(sc1, sc2, sc3);
+      doc.text(healthStatus, 80, currentY + 22);
+      
+      // Professional footer for all pages
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         
-        // Footer line
-        doc.setDrawColor(226, 232, 240);
-        doc.line(20, pageHeight - 25, pageWidth - 20, pageHeight - 25);
+        // Footer background
+        doc.setFillColor(249, 250, 251);
+        doc.rect(0, pageHeight - 35, pageWidth, 35, 'F');
+        
+        // Footer line with gradient effect
+        doc.setDrawColor(139, 92, 246);
+        doc.setLineWidth(1);
+        doc.line(0, pageHeight - 35, pageWidth, pageHeight - 35);
         
         // Footer content
         doc.setFontSize(8);
+        doc.setTextColor(71, 85, 105);
+        doc.setFont('helvetica', 'bold');
+        doc.text('FINTRACK', 20, pageHeight - 25);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Financial Statement - Confidential Document', 20, pageHeight - 19);
+        
+        // Disclaimer
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'italic');
         doc.setTextColor(100, 116, 139);
-        doc.text('FinTrack Financial Statement - Confidential', 20, pageHeight - 15);
-        doc.text(`Page ${i} of ${pageCount}`, pageWidth - 35, pageHeight - 15);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 20, pageHeight - 8);
-        doc.text(`${user.currency || 'USD'} Currency`, pageWidth - 50, pageHeight - 8);
+        doc.text('This is a system-generated report. Errors and omissions excepted.', 20, pageHeight - 12);
+        doc.text('All calculations are based on user-provided data.', 20, pageHeight - 7);
+        
+        // Page number
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 19, { align: 'center' });
+        
+        // Right side info
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 60, pageHeight - 25);
+        doc.text(`Currency: ${user.currency || 'USD'}`, pageWidth - 60, pageHeight - 19);
       }
       
       // Generate filename with timestamp
@@ -422,10 +635,15 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       
     } catch (error) {
       console.error('PDF generation error:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        type: typeof error
+      });
       setPdfExportModal({
         isOpen: true,
         status: 'error',
-        error: 'Failed to generate PDF. Please try again.'
+        error: error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.'
       });
     }
   };
@@ -787,7 +1005,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
             <p className="text-sm text-gray-600 mt-1">Track your financial overview</p>
           </div>
           <button
-            onClick={() => generatePDFReport()}
+            onClick={() => setShowDateRangeSelector(true)}
             className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1046,6 +1264,15 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         status={pdfExportModal.status}
         fileName={pdfExportModal.fileName}
         error={pdfExportModal.error}
+      />
+      
+      {/* Date Range Selector Modal */}
+      <DateRangeSelectorModal
+        isOpen={showDateRangeSelector}
+        onClose={() => setShowDateRangeSelector(false)}
+        onConfirm={(startDate, endDate, periodLabel) => {
+          generatePDFReport(startDate, endDate, periodLabel);
+        }}
       />
     </div>
   );
