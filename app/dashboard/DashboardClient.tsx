@@ -3,11 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Navbar from '@/components/Navbar';
 import EditTransactionModalOptimistic from '@/components/EditTransactionModalOptimistic';
 import EditGoalModal from '@/components/EditGoalModal';
 import ProfileSettings from '@/components/ProfileSettings';
 import PeriodSelector from '@/components/PeriodSelector';
+import PDFExportModal from '@/components/PDFExportModal';
 import PeriodAnalytics from '@/components/PeriodAnalytics';
 import BillReminderManager from '@/components/BillReminderManager';
 import SpendingPieChartNew from '@/components/charts/SpendingPieChartNew';
@@ -90,6 +93,14 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
   
   // Collapsible sections
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  
+  // PDF Export Modal state
+  const [pdfExportModal, setPdfExportModal] = useState<{
+    isOpen: boolean;
+    status: 'generating' | 'success' | 'error';
+    fileName?: string;
+    error?: string;
+  }>({ isOpen: false, status: 'generating' });
 
   // Calculate financial metrics
   const totalIncome = expenses
@@ -106,6 +117,318 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
   // Get all transactions sorted by date
   const allTransactions = [...expenses]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Generate Professional PDF Report
+  const generatePDFReport = async () => {
+    try {
+      // Show generating modal
+      setPdfExportModal({ isOpen: true, status: 'generating' });
+      
+      // Small delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      
+      // PROFESSIONAL HEADER DESIGN
+      // Main header background
+      doc.setFillColor(30, 41, 59); // Slate-800
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      
+      // Accent stripe
+      doc.setFillColor(59, 130, 246); // Blue-500
+      doc.rect(0, 0, pageWidth, 3, 'F');
+      
+      // Company/App name
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(26);
+      doc.setFont('helvetica', 'bold');
+      doc.text('FINANCIAL STATEMENT', 20, 22);
+      
+      // Report subtitle
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Personal Finance Analysis Report', 20, 32);
+      
+      // Report metadata (right side)
+      const reportDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REPORT DATE', pageWidth - 85, 18);
+      doc.setFont('helvetica', 'normal');
+      doc.text(reportDate, pageWidth - 85, 25);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text('ACCOUNT HOLDER', pageWidth - 85, 32);
+      doc.setFont('helvetica', 'normal');
+      doc.text(user.name || user.email.split('@')[0], pageWidth - 85, 39);
+      
+      // Reset colors
+      doc.setTextColor(0, 0, 0);
+      
+      // EXECUTIVE SUMMARY SECTION
+      let currentY = 65;
+      
+      // Section header with background
+      doc.setFillColor(248, 250, 252); // Gray-50
+      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'F');
+      doc.setDrawColor(226, 232, 240); // Gray-200
+      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'S');
+      
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85); // Slate-700
+      doc.text('EXECUTIVE SUMMARY', 20, currentY + 3);
+      
+      currentY += 25;
+      
+      // Key Performance Indicators (KPI) Table
+      const kpiData = [
+        ['Total Revenue (Income)', formatCurrency(totalIncome, user.currency as Currency), totalIncome > 0 ? '↗' : '→'],
+        ['Total Expenditure', formatCurrency(Math.abs(totalExpenses), user.currency as Currency), totalExpenses > 0 ? '↘' : '→'],
+        ['Net Cash Flow', formatCurrency(balance, user.currency as Currency), balance >= 0 ? '↗' : '↘'],
+        ['Cash Flow Ratio', balance > 0 ? `${((balance / totalIncome) * 100).toFixed(1)}%` : '0%', balance >= 0 ? '↗' : '↘'],
+      ];
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Key Performance Indicator', 'Value', 'Trend']],
+        body: kpiData,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [59, 130, 246],
+          textColor: 255,
+          fontSize: 11,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 10,
+          cellPadding: 6
+        },
+        columnStyles: {
+          0: { cellWidth: 90, fontStyle: 'normal' },
+          1: { cellWidth: 60, halign: 'right', fontStyle: 'bold' },
+          2: { cellWidth: 20, halign: 'center', fontSize: 12 }
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] }
+      });
+      
+      // EXPENDITURE ANALYSIS SECTION
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+      
+      // Section header
+      doc.setFillColor(248, 250, 252);
+      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'S');
+      
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text('EXPENDITURE ANALYSIS BY CATEGORY', 20, currentY + 3);
+      
+      currentY += 25;
+      
+      // Category Analysis with Professional Bar Chart
+      const categoryTotals = expenses
+        .filter(e => e.type === 'expense')
+        .reduce((acc, expense) => {
+          const category = expense.category || 'Miscellaneous';
+          acc[category] = (acc[category] || 0) + Math.abs(expense.amount);
+          return acc;
+        }, {} as Record<string, number>);
+      
+      const sortedCategories = Object.entries(categoryTotals)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8);
+      
+      // Draw professional bar chart
+      if (sortedCategories.length > 0) {
+        const chartWidth = 140;
+        const chartHeight = 80;
+        const chartX = 25;
+        const chartStartY = currentY;
+        const maxAmount = Math.max(...sortedCategories.map(([,amount]) => amount));
+        
+        // Chart background
+        doc.setFillColor(249, 250, 251);
+        doc.rect(chartX - 5, chartStartY - 5, chartWidth + 10, chartHeight + 20, 'F');
+        doc.setDrawColor(229, 231, 235);
+        doc.rect(chartX - 5, chartStartY - 5, chartWidth + 10, chartHeight + 20, 'S');
+        
+        // Chart title
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Spending Distribution', chartX, chartStartY - 10);
+        
+        // Draw bars
+        const barWidth = chartWidth / sortedCategories.length - 2;
+        const colors = [
+          [59, 130, 246],   // Blue
+          [16, 185, 129],   // Green
+          [245, 101, 101],  // Red
+          [251, 191, 36],   // Yellow
+          [139, 92, 246],   // Purple
+          [236, 72, 153],   // Pink
+          [20, 184, 166],   // Teal
+          [251, 146, 60]    // Orange
+        ];
+        
+        sortedCategories.forEach(([category, amount], index) => {
+          const barHeight = (amount / maxAmount) * chartHeight;
+          const barX = chartX + (index * (barWidth + 2));
+          const barY = chartStartY + chartHeight - barHeight;
+          
+          // Draw bar
+          const [r, g, b] = colors[index % colors.length];
+          doc.setFillColor(r, g, b);
+          doc.rect(barX, barY, barWidth, barHeight, 'F');
+          
+          // Category label (rotated)
+          doc.setTextColor(100, 116, 139);
+          doc.setFontSize(8);
+          const shortCategory = category.length > 8 ? category.substring(0, 8) + '.' : category;
+          doc.text(shortCategory, barX + barWidth/2 - 8, chartStartY + chartHeight + 8, { angle: 45 });
+        });
+        
+        // Chart legend table
+        const legendData = sortedCategories.map(([category, amount], index) => {
+          const percentage = ((amount / totalExpenses) * 100).toFixed(1);
+          return [
+            category,
+            formatCurrency(amount, user.currency as Currency),
+            `${percentage}%`
+          ];
+        });
+        
+        autoTable(doc, {
+          startY: chartStartY + chartHeight + 25,
+          head: [['Category', 'Amount', '% of Total']],
+          body: legendData,
+          theme: 'striped',
+          headStyles: { 
+            fillColor: [71, 85, 105],
+            textColor: 255,
+            fontSize: 10
+          },
+          bodyStyles: {
+            fontSize: 9,
+            cellPadding: 4
+          },
+          columnStyles: {
+            0: { cellWidth: 50 },
+            1: { cellWidth: 40, halign: 'right' },
+            2: { cellWidth: 25, halign: 'center' }
+          },
+          margin: { left: 20, right: 20 }
+        });
+      }
+      
+      // Add new page for transaction history
+      doc.addPage();
+      
+      // TRANSACTION HISTORY SECTION
+      currentY = 20;
+      
+      doc.setFillColor(248, 250, 252);
+      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.rect(15, currentY - 5, pageWidth - 30, 15, 'S');
+      
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text('TRANSACTION HISTORY', 20, currentY + 3);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Recent 20 transactions', 20, currentY + 10);
+      
+      currentY += 25;
+      
+      // Transaction table
+      const transactionData = allTransactions
+        .slice(0, 20)
+        .map((transaction, index) => [
+          (index + 1).toString(),
+          new Date(transaction.date).toLocaleDateString(),
+          transaction.category,
+          transaction.type === 'income' ? 'Credit' : 'Debit',
+          formatCurrency(Math.abs(transaction.amount), user.currency as Currency),
+          transaction.notes?.substring(0, 30) || 'N/A'
+        ]);
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['#', 'Date', 'Category', 'Type', 'Amount', 'Description']],
+        body: transactionData,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [59, 130, 246],
+          textColor: 255,
+          fontSize: 9,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 8,
+          cellPadding: 3
+        },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 25 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 20, halign: 'center' },
+          4: { cellWidth: 30, halign: 'right' },
+          5: { cellWidth: 55 }
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] }
+      });
+      
+      // Professional footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        
+        // Footer line
+        doc.setDrawColor(226, 232, 240);
+        doc.line(20, pageHeight - 25, pageWidth - 20, pageHeight - 25);
+        
+        // Footer content
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text('FinTrack Financial Statement - Confidential', 20, pageHeight - 15);
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth - 35, pageHeight - 15);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 20, pageHeight - 8);
+        doc.text(`${user.currency || 'USD'} Currency`, pageWidth - 50, pageHeight - 8);
+      }
+      
+      // Generate filename with timestamp
+      const fileName = `FinTrack_Statement_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Save the PDF
+      doc.save(fileName);
+      
+      // Show success modal
+      setPdfExportModal({
+        isOpen: true,
+        status: 'success',
+        fileName
+      });
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      setPdfExportModal({
+        isOpen: true,
+        status: 'error',
+        error: 'Failed to generate PDF. Please try again.'
+      });
+    }
+  };
 
   // Refresh data with live updates
   const refreshData = async () => {
@@ -457,6 +780,24 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
 
       {/* Main Content - Responsive Layout */}
       <main className="relative z-10 w-full px-3 sm:px-4 md:px-6 lg:max-w-7xl lg:mx-auto py-4 sm:py-6 lg:py-8">
+        {/* Header with Export Button */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-sm text-gray-600 mt-1">Track your financial overview</p>
+          </div>
+          <button
+            onClick={() => generatePDFReport()}
+            className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="hidden sm:inline">Export PDF Report</span>
+            <span className="sm:hidden">Export</span>
+          </button>
+        </div>
+        
         {/* Summary Cards - Top */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <SummaryCard title="Total Income" amount={totalIncome} color="green" icon="💰" currency={user.currency as Currency} />
@@ -697,6 +1038,15 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
           }}
         />
       )}
+
+      {/* PDF Export Modal */}
+      <PDFExportModal
+        isOpen={pdfExportModal.isOpen}
+        onClose={() => setPdfExportModal({ isOpen: false, status: 'generating' })}
+        status={pdfExportModal.status}
+        fileName={pdfExportModal.fileName}
+        error={pdfExportModal.error}
+      />
     </div>
   );
 }

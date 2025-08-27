@@ -189,6 +189,7 @@ export default function SpendingPieChartNew({ expenses, currency = 'USD' }: Spen
               cy="50%"
               labelLine={false}
               label={(entry) => {
+                if (!entry.value) return '';
                 const percent = ((entry.value / totalExpenses) * 100).toFixed(0);
                 return Number(percent) > 5 ? `${percent}%` : '';
               }}

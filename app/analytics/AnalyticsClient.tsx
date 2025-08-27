@@ -305,7 +305,7 @@ export default function AnalyticsClient({ user, initialData }: AnalyticsClientPr
             <div className="bg-white/90 backdrop-blur-lg rounded-xl shadow-xl border border-white/50 overflow-hidden">
               <ExpensesLineChartNew 
                 expenses={filteredByPeriod} 
-                period="day" 
+                period="week" 
                 currency={user.currency as Currency} 
               />
             </div>
