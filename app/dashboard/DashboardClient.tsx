@@ -103,10 +103,9 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
   const balance = totalIncome - totalExpenses;
   const monthlyIncome = totalIncome; // Use total income from the period
 
-  // Get recent transactions (last 5 for compact view)
-  const recentTransactions = [...expenses]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
+  // Get all transactions sorted by date
+  const allTransactions = [...expenses]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // Refresh data with live updates
   const refreshData = async () => {
@@ -560,12 +559,12 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
             <div className="bg-gradient-to-r from-indigo-500 to-blue-600 p-4 sm:p-6">
               <h3 className="text-lg sm:text-xl font-bold text-white">Recent Transactions</h3>
             </div>
-            <div className="p-3 sm:p-4">
-              {recentTransactions.length === 0 ? (
+            <div className="p-3 sm:p-4 h-[400px] overflow-hidden">
+              {allTransactions.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">No transactions yet</p>
               ) : (
-                <div className="space-y-2">
-                  {recentTransactions.map((transaction) => (
+                <div className="space-y-2 h-full overflow-y-auto pr-2 custom-scrollbar">
+                  {allTransactions.map((transaction) => (
                     <div
                       key={transaction.id}
                       onClick={() => handleEditTransaction(transaction)}

@@ -22,6 +22,24 @@ interface SpendingRadarChartProps {
 }
 
 export default function SpendingRadarChartNew({ expenses, currency }: SpendingRadarChartProps) {
+  // Shorten category names for mobile
+  const shortenCategory = (name: string): string => {
+    const maxLength = 10;
+    if (name.length <= maxLength) return name;
+    
+    const shortened: Record<string, string> = {
+      'Entertainment': 'Entertain.',
+      'Transportation': 'Transport',
+      'Subscriptions': 'Subscribe.',
+      'Healthcare': 'Health',
+      'Personal Care': 'Personal',
+      'Home & Garden': 'Home',
+      'Gifts & Donations': 'Gifts',
+    };
+    
+    return shortened[name] || (name.length > maxLength ? name.substring(0, maxLength - 1) + '.' : name);
+  };
+
   // Group by category and get top 6
   const categoryData = expenses.reduce((acc, expense) => {
     if (!acc[expense.category]) {
@@ -38,7 +56,8 @@ export default function SpendingRadarChartNew({ expenses, currency }: SpendingRa
   const maxAmount = Math.max(...sortedCategories.map(([,amount]) => amount));
 
   const data = sortedCategories.map(([category, amount]) => ({
-    category,
+    category: shortenCategory(category),
+    fullCategory: category,
     amount,
     fullMark: maxAmount,
   }));
@@ -61,7 +80,7 @@ export default function SpendingRadarChartNew({ expenses, currency }: SpendingRa
                 Category
               </span>
               <span className="font-bold text-muted-foreground">
-                {data.payload.category}
+                {data.payload.fullCategory || data.payload.category}
               </span>
             </div>
             <div className="flex flex-col">
@@ -86,20 +105,22 @@ export default function SpendingRadarChartNew({ expenses, currency }: SpendingRa
         <CardDescription>Multi-category spending comparison</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[400px]">
-          <RadarChart data={data}>
+        <ChartContainer config={chartConfig} className="h-[300px] sm:h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
             <PolarGrid 
               gridType="polygon"
               className="stroke-muted"
             />
             <PolarAngleAxis 
               dataKey="category"
-              className="text-xs"
+              className="text-[10px] sm:text-xs"
+              tick={{ fontSize: 10 }}
             />
             <PolarRadiusAxis 
               angle={90}
               domain={[0, maxAmount]}
-              className="text-xs"
+              className="text-[10px] sm:text-xs"
               tick={false}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -111,12 +132,13 @@ export default function SpendingRadarChartNew({ expenses, currency }: SpendingRa
               fillOpacity={0.6}
             />
           </RadarChart>
+          </ResponsiveContainer>
         </ChartContainer>
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
           {sortedCategories.map(([category, amount]) => (
             <div key={category} className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{category}</span>
-              <span className="text-sm font-medium">
+              <span className="text-xs sm:text-sm text-muted-foreground truncate mr-2">{shortenCategory(category)}</span>
+              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
                 {formatCurrency(amount, currency)}
               </span>
             </div>

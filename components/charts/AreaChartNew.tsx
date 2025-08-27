@@ -102,14 +102,15 @@ export default function AreaChartNew({ expenses, currency }: AreaChartProps) {
         <CardDescription>Income and expenses over time</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px]">
+        <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={chartData}
             margin={{
               top: 10,
-              right: 10,
-              left: 10,
-              bottom: 0,
+              right: 5,
+              left: -20,
+              bottom: 30,
             }}
           >
             <defs>
@@ -126,16 +127,21 @@ export default function AreaChartNew({ expenses, currency }: AreaChartProps) {
             <XAxis 
               dataKey="month" 
               stroke="#888888"
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               axisLine={false}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+              interval={0}
             />
             <YAxis 
               stroke="#888888"
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => formatCurrency(value, currency, true)}
+              width={45}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area
@@ -153,6 +159,7 @@ export default function AreaChartNew({ expenses, currency }: AreaChartProps) {
               fill="url(#colorExpenses)"
             />
           </AreaChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
     </Card>

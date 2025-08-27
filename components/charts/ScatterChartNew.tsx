@@ -121,13 +121,14 @@ export default function ExpenseScatterPlotNew({ expenses, currency }: ExpenseSca
         <CardDescription>Frequency vs Average Amount by Category</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[400px]">
+        <ChartContainer config={chartConfig} className="h-[300px] sm:h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
           <ScatterChart
             margin={{
-              top: 20,
-              right: 30,
-              bottom: 60,
-              left: 80,
+              top: 10,
+              right: 10,
+              bottom: 50,
+              left: 50,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -136,21 +137,22 @@ export default function ExpenseScatterPlotNew({ expenses, currency }: ExpenseSca
               dataKey="x" 
               name="Frequency"
               stroke="#888888"
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               axisLine={false}
-              label={{ value: 'Frequency (transactions)', position: 'insideBottomRight', offset: -5 }}
+              label={{ value: 'Frequency', position: 'insideBottomRight', offset: -5, fontSize: 10 }}
             />
             <YAxis 
               type="number" 
               dataKey="y" 
               name="Average"
               stroke="#888888"
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => formatCurrency(value, currency, true)}
-              label={{ value: 'Avg Amount', angle: -90, position: 'insideLeft', offset: -25, style: { textAnchor: 'middle' } }}
+              label={{ value: 'Avg', angle: -90, position: 'insideLeft', offset: -15, style: { textAnchor: 'middle' }, fontSize: 10 }}
+              width={45}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
             <Scatter name="Categories" data={data} fill="#8884d8">
@@ -159,16 +161,17 @@ export default function ExpenseScatterPlotNew({ expenses, currency }: ExpenseSca
               ))}
             </Scatter>
           </ScatterChart>
+          </ResponsiveContainer>
         </ChartContainer>
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
           {data.slice(0, 6).map((item) => (
             <div key={item.category} className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-sm">{item.category}</span>
-              <span className="text-sm text-muted-foreground ml-auto">
+              <span className="text-xs sm:text-sm truncate">{item.category.length > 12 ? item.category.substring(0, 12) + '...' : item.category}</span>
+              <span className="text-xs sm:text-sm text-muted-foreground ml-auto whitespace-nowrap">
                 {item.x} times
               </span>
             </div>

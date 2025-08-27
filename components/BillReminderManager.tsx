@@ -305,28 +305,28 @@ export default function BillReminderManager() {
 
   return (
     <>
-      <div className="bg-white/90 backdrop-blur-lg shadow-lg rounded-2xl overflow-hidden">
-        <div className="px-6 py-5 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-gray-100">
-          <div className="flex justify-between items-center">
+      <div className="bg-white/90 backdrop-blur-lg shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <BellAlertIcon className="w-6 h-6 text-blue-600" />
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <BellAlertIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                 Bill Reminders
               </h3>
-              <p className="text-sm text-gray-600 mt-1">Never miss a payment with automatic reminders</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">Never miss a payment with automatic reminders</p>
             </div>
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-sm font-medium rounded-xl hover:from-blue-600 hover:to-cyan-700 shadow-sm transition-all transform hover:scale-105"
+              className="inline-flex items-center justify-center px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs sm:text-sm font-medium rounded-xl hover:from-blue-600 hover:to-cyan-700 shadow-sm transition-all transform hover:scale-105 w-full sm:w-auto"
             >
-              <PlusIcon className="h-4 w-4 mr-2" />
+              <PlusIcon className="h-4 w-4 mr-1 sm:mr-2" />
               Add Bill
             </button>
           </div>
         </div>
 
         {showForm && (
-          <div className="px-6 py-6 bg-gradient-to-br from-sky-50 to-blue-50 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 bg-gradient-to-br from-sky-50 to-blue-50 border-b border-gray-200">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Bill Name */}
@@ -478,7 +478,7 @@ export default function BillReminderManager() {
           </div>
         )}
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {bills.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
@@ -499,7 +499,7 @@ export default function BillReminderManager() {
                 return (
                   <div 
                     key={bill.id} 
-                    className={`group relative p-5 rounded-xl border-2 transition-all ${
+                    className={`group relative p-3 sm:p-5 rounded-xl border-2 transition-all ${
                       bill.isPaid 
                         ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
                         : isOverdue 
@@ -509,17 +509,17 @@ export default function BillReminderManager() {
                             : 'bg-gradient-to-br from-white to-gray-50 border-gray-100 hover:border-blue-200 hover:shadow-lg'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1">
                         {/* Bill Icon */}
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${frequencyGradient} flex items-center justify-center text-2xl shadow-sm`}>
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${frequencyGradient} flex items-center justify-center text-xl sm:text-2xl shadow-sm flex-shrink-0`}>
                           {icon}
                         </div>
                         
                         <div className="flex-1">
                           {/* Bill Name and Status */}
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className={`font-semibold text-lg ${bill.isPaid ? 'text-green-900' : 'text-gray-900'}`}>
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h4 className={`font-semibold text-base sm:text-lg ${bill.isPaid ? 'text-green-900' : 'text-gray-900'}`}>
                               {bill.name}
                             </h4>
                             {bill.isPaid && (
@@ -541,18 +541,18 @@ export default function BillReminderManager() {
                           </div>
                           
                           {/* Bill Details */}
-                          <div className="text-sm text-gray-600 flex items-center gap-3">
-                            <span>Due: {formatDate(bill.dueDate)}</span>
+                          <div className="text-xs sm:text-sm text-gray-600 flex flex-wrap items-center gap-2 sm:gap-3">
+                            <span className="whitespace-nowrap">Due: {formatDate(bill.dueDate)}</span>
                             {bill.amount && (
-                              <span className="font-medium text-gray-900">
+                              <span className="font-medium text-gray-900 whitespace-nowrap">
                                 {formatCurrency(bill.amount, userCurrency)}
                               </span>
                             )}
-                            <span className="capitalize px-2 py-0.5 bg-gray-100 rounded-md text-xs">
+                            <span className="capitalize px-2 py-0.5 bg-gray-100 rounded-md text-xs whitespace-nowrap">
                               {bill.frequency}
                             </span>
                             {!bill.isPaid && (
-                              <span className={`font-medium ${isOverdue ? 'text-red-600' : isDueSoon ? 'text-yellow-600' : 'text-gray-500'}`}>
+                              <span className={`font-medium whitespace-nowrap ${isOverdue ? 'text-red-600' : isDueSoon ? 'text-yellow-600' : 'text-gray-500'}`}>
                                 {isOverdue 
                                   ? `${Math.abs(daysUntilDue)} day${Math.abs(daysUntilDue) > 1 ? 's' : ''} overdue`
                                   : `${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''} remaining`
@@ -564,17 +564,17 @@ export default function BillReminderManager() {
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
                         {!bill.isPaid && (
                           <button
                             onClick={() => markAsPaid(bill.id)}
-                            className="px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg text-sm font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm"
+                            className="px-2 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm whitespace-nowrap"
                           >
-                            <CheckIcon className="h-4 w-4 inline mr-1" />
+                            <CheckIcon className="h-3 w-3 sm:h-4 sm:w-4 inline mr-0.5 sm:mr-1" />
                             Mark Paid
                           </button>
                         )}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleEdit(bill)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

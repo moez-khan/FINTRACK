@@ -84,7 +84,7 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex min-h-full items-center justify-center p-2 sm:p-4 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -94,9 +94,9 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl mx-4 transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-4xl mx-2 sm:mx-4 transform overflow-hidden rounded-xl sm:rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
                 {/* Modal Header with Gradient */}
-                <div className="relative bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4 sm:p-6">
+                <div className="relative bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-3 sm:p-6">
                   {/* Animated background pattern */}
                   <div className="absolute inset-0 overflow-hidden">
                     <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
@@ -104,15 +104,15 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
                   </div>
                   
                   <div className="relative flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-white/20 backdrop-blur-lg rounded-xl flex items-center justify-center">
-                        <CogIcon className="w-6 h-6 text-white" />
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-lg rounded-xl flex items-center justify-center">
+                        <CogIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
                       <div>
-                        <Dialog.Title as="h3" className="text-2xl font-bold text-white">
+                        <Dialog.Title as="h3" className="text-lg sm:text-2xl font-bold text-white">
                           Settings
                         </Dialog.Title>
-                        <p className="text-white/80 text-sm">Manage your preferences and configurations</p>
+                        <p className="text-white/80 text-xs sm:text-sm hidden sm:block">Manage your preferences and configurations</p>
                       </div>
                     </div>
                     <button
@@ -122,17 +122,17 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
                         e.stopPropagation();
                         onClose();
                       }}
-                      className="p-2 hover:bg-white/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                      className="p-1.5 sm:p-2 hover:bg-white/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
                       aria-label="Close settings"
                     >
-                      <XMarkIcon className="w-6 h-6 text-white" />
+                      <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </button>
                   </div>
                 </div>
 
                 {/* Tab Navigation */}
                 <div className="border-b border-gray-200 bg-gray-50/50">
-                  <nav className="flex space-x-1 px-6 pt-2">
+                  <nav className="flex space-x-1 px-2 sm:px-6 pt-2 overflow-x-auto scrollbar-hide">
                     {tabs.map((tab) => (
                       <button
                         key={tab.id}
@@ -142,15 +142,16 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
                           e.stopPropagation();
                           handleTabChange(tab.id);
                         }}
-                        className={`group relative px-4 py-3 text-sm font-medium rounded-t-lg transition-all cursor-pointer ${
+                        className={`group relative px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-t-lg transition-all cursor-pointer whitespace-nowrap ${
                           activeTab === tab.id
                             ? 'bg-white text-indigo-600 shadow-sm border-t border-l border-r border-gray-200'
                             : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
                         }`}
                       >
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg">{tab.emoji}</span>
-                          <span>{tab.name}</span>
+                        <div className="flex items-center space-x-1 sm:space-x-2">
+                          <span className="text-base sm:text-lg">{tab.emoji}</span>
+                          <span className="hidden sm:inline">{tab.name}</span>
+                          <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
                         </div>
                         {activeTab === tab.id && (
                           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
@@ -161,7 +162,7 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
                 </div>
 
                 {/* Tab Content */}
-                <div className="relative p-6 max-h-[60vh] overflow-y-auto bg-gradient-to-br from-gray-50 to-white">
+                <div className="relative p-3 sm:p-6 max-h-[60vh] overflow-y-auto bg-gradient-to-br from-gray-50 to-white">
                   {/* Subtle background pattern */}
                   <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
                     <div className="absolute inset-0" style={{
@@ -198,9 +199,9 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
                 </div>
 
                 {/* Modal Footer */}
-                <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-500">
+                <div className="bg-gray-50 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <p className="text-xs sm:text-sm text-gray-500 truncate">
                       Logged in as <span className="font-medium text-gray-700">{user.email}</span>
                     </p>
                     <button
@@ -210,7 +211,7 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
                         e.stopPropagation();
                         onClose();
                       }}
-                      className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-sm font-medium rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                      className="px-3 py-2 sm:px-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 w-full sm:w-auto"
                     >
                       Close Settings
                     </button>

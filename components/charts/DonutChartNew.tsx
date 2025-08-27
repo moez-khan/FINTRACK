@@ -94,20 +94,21 @@ export default function DonutChartNew({ expenses, currency }: DonutChartProps) {
         <CardTitle>Category Breakdown</CardTitle>
         <CardDescription>Donut visualization of spending</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="text-center mb-4">
-          <p className="text-2xl font-bold">{formatCurrency(total, currency)}</p>
-          <p className="text-sm text-muted-foreground">Total Amount</p>
+      <CardContent className="flex flex-col items-center">
+        <div className="text-center mb-4 w-full">
+          <p className="text-xl sm:text-2xl font-bold">{formatCurrency(total, currency)}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Total Amount</p>
         </div>
-        <ChartContainer config={chartConfig} className="h-[300px]">
+        <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px] w-full mx-auto">
+          <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
               labelLine={false}
-              innerRadius={60}
-              outerRadius={80}
+              innerRadius="40%"
+              outerRadius="60%"
               fill="#8884d8"
               dataKey="value"
             >
@@ -117,16 +118,17 @@ export default function DonutChartNew({ expenses, currency }: DonutChartProps) {
             </Pie>
             <Tooltip content={<CustomTooltip />} />
           </PieChart>
+          </ResponsiveContainer>
         </ChartContainer>
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs sm:text-sm w-full max-w-md">
           {sortedCategories.map(([category, amount], index) => (
-            <div key={category} className="flex items-center gap-2">
+            <div key={category} className="flex items-center gap-1.5 min-w-0">
               <div 
-                className="w-3 h-3 rounded-full"
+                className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: COLORS[index % COLORS.length] }}
               />
-              <span className="text-sm">{category}</span>
-              <span className="text-sm text-muted-foreground ml-auto">
+              <span className="truncate">{category}</span>
+              <span className="text-muted-foreground ml-auto flex-shrink-0">
                 {((amount / total) * 100).toFixed(0)}%
               </span>
             </div>

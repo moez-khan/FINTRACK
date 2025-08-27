@@ -80,43 +80,43 @@ export default function CalendarHeatmapNew({ expenses, currency }: CalendarHeatm
         <CardTitle>Daily Activity Heatmap</CardTitle>
         <CardDescription>Spending patterns over the last 3 months</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
+      <CardContent className="p-3 sm:p-6">
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="min-w-[500px] sm:min-w-[600px]">
             {/* Day labels */}
-            <div className="flex gap-1 mb-2">
-              <div className="w-12"></div>
+            <div className="flex gap-0.5 sm:gap-1 mb-2">
+              <div className="w-10 sm:w-12"></div>
               {days.map((day, i) => (
-                <div key={i} className="w-4 text-xs text-muted-foreground text-center">
+                <div key={i} className="w-3 sm:w-4 text-[10px] sm:text-xs text-muted-foreground text-center">
                   {day}
                 </div>
               ))}
             </div>
             
             {/* Calendar grid */}
-            <div className="flex gap-1">
-              <div className="flex flex-col justify-between pr-2">
+            <div className="flex gap-0.5 sm:gap-1">
+              <div className="flex flex-col justify-between pr-1 sm:pr-2">
                 {Array.from({ length: 3 }, (_, i) => {
                   const month = new Date();
                   month.setMonth(month.getMonth() - (2 - i));
                   return (
-                    <div key={i} className="text-xs text-muted-foreground">
+                    <div key={i} className="text-[10px] sm:text-xs text-muted-foreground">
                       {months[month.getMonth()]}
                     </div>
                   );
                 })}
               </div>
               
-              <div className="flex gap-1">
+              <div className="flex gap-0.5 sm:gap-1">
                 {weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="flex flex-col gap-1">
+                  <div key={weekIndex} className="flex flex-col gap-0.5 sm:gap-1">
                     {week.map((day, dayIndex) => {
                       const dateStr = day.date.toISOString().split('T')[0];
                       const isInRange = day.date >= startDate && day.date <= endDate;
                       return (
                         <div
                           key={dayIndex}
-                          className={`w-4 h-4 rounded-sm transition-colors hover:ring-2 hover:ring-offset-1 hover:ring-primary ${
+                          className={`w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-colors hover:ring-1 sm:hover:ring-2 hover:ring-offset-1 hover:ring-primary ${
                             isInRange ? getColor(day.amount) : 'bg-transparent'
                           }`}
                           title={isInRange ? `${dateStr}: ${formatCurrency(day.amount, currency)}` : ''}
@@ -129,16 +129,16 @@ export default function CalendarHeatmapNew({ expenses, currency }: CalendarHeatm
             </div>
             
             {/* Legend */}
-            <div className="flex items-center gap-2 mt-4">
-              <span className="text-xs text-muted-foreground">Less</span>
-              <div className="flex gap-1">
-                <div className="w-4 h-4 rounded-sm bg-muted" />
-                <div className="w-4 h-4 rounded-sm bg-emerald-200" />
-                <div className="w-4 h-4 rounded-sm bg-emerald-400" />
-                <div className="w-4 h-4 rounded-sm bg-emerald-500" />
-                <div className="w-4 h-4 rounded-sm bg-emerald-600" />
+            <div className="flex items-center gap-1 sm:gap-2 mt-3 sm:mt-4">
+              <span className="text-[10px] sm:text-xs text-muted-foreground">Less</span>
+              <div className="flex gap-0.5 sm:gap-1">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm bg-muted" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm bg-emerald-200" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm bg-emerald-400" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm bg-emerald-500" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm bg-emerald-600" />
               </div>
-              <span className="text-xs text-muted-foreground">More</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">More</span>
             </div>
           </div>
         </div>

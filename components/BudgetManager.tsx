@@ -271,30 +271,30 @@ export default function BudgetManager() {
 
   return (
     <>
-      <div className="bg-white/90 backdrop-blur-lg shadow-lg rounded-2xl overflow-hidden">
-        <div className="px-6 py-5 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-100">
-          <div className="flex justify-between items-center">
+      <div className="bg-white/90 backdrop-blur-lg shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <ChartBarIcon className="w-6 h-6 text-indigo-600" />
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <ChartBarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
                 Budget Management
               </h3>
-              <p className="text-sm text-gray-600 mt-1">Set spending limits for different categories</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">Set spending limits for different categories</p>
             </div>
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 shadow-sm transition-all transform hover:scale-105"
+              className="inline-flex items-center justify-center px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs sm:text-sm font-medium rounded-xl hover:from-indigo-600 hover:to-purple-700 shadow-sm transition-all transform hover:scale-105 w-full sm:w-auto"
             >
-              <PlusIcon className="h-4 w-4 mr-2" />
+              <PlusIcon className="h-4 w-4 mr-1 sm:mr-2" />
               Add Budget
             </button>
           </div>
         </div>
 
         {showForm && (
-          <div className="px-6 py-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-gray-200">
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 {/* Category Select */}
                 <div className="relative">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -305,7 +305,7 @@ export default function BudgetManager() {
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-3 pl-10 rounded-xl border-2 border-gray-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all appearance-none cursor-pointer"
+                      className="w-full px-3 py-2.5 sm:px-4 sm:py-3 pl-10 rounded-xl border-2 border-gray-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all appearance-none cursor-pointer text-sm sm:text-base"
                       required
                     >
                       <option value="">Select category</option>
@@ -335,7 +335,7 @@ export default function BudgetManager() {
                       min="0"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                      className="w-full pl-10 pr-3 py-2.5 sm:pr-4 sm:py-3 rounded-xl border-2 border-gray-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm sm:text-base"
                       placeholder="0.00"
                       required
                     />
@@ -351,7 +351,7 @@ export default function BudgetManager() {
                   <select
                     value={formData.period}
                     onChange={(e) => setFormData({ ...formData, period: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all appearance-none cursor-pointer"
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl border-2 border-gray-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all appearance-none cursor-pointer text-sm sm:text-base"
                   >
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
@@ -360,18 +360,18 @@ export default function BudgetManager() {
                 </div>
               </div>
               
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="px-5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 sm:px-5 sm:py-2.5 border-2 border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors w-full sm:w-auto"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 transition-all shadow-sm"
+                  className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl text-xs sm:text-sm font-medium hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 transition-all shadow-sm w-full sm:w-auto"
                 >
                   {saving ? 'Saving...' : editingBudget ? 'Update Budget' : 'Create Budget'}
                 </button>
@@ -380,7 +380,7 @@ export default function BudgetManager() {
           </div>
         )}
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {budgets.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
@@ -390,7 +390,7 @@ export default function BudgetManager() {
               <p className="text-gray-400 text-sm mt-2">Create your first budget to start tracking spending limits</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {budgets.map((budget) => {
                 const icon = CATEGORY_ICONS[budget.category] || '📦';
                 const gradient = CATEGORY_COLORS[budget.category] || 'from-gray-400 to-gray-500';
@@ -398,17 +398,17 @@ export default function BudgetManager() {
                 return (
                   <div 
                     key={budget.id} 
-                    className="group relative bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl border-2 border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all"
+                    className="group relative bg-gradient-to-br from-white to-gray-50 p-4 sm:p-5 rounded-xl border-2 border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all"
                   >
                     {/* Category Icon and Name */}
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-2xl shadow-sm`}>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-xl sm:text-2xl shadow-sm`}>
                           {icon}
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 text-lg">{budget.category}</h4>
-                          <p className="text-sm text-gray-500 capitalize">{budget.period} budget</p>
+                          <h4 className="font-semibold text-gray-900 text-base sm:text-lg">{budget.category}</h4>
+                          <p className="text-xs sm:text-sm text-gray-500 capitalize">{budget.period} budget</p>
                         </div>
                       </div>
                     </div>
@@ -416,14 +416,14 @@ export default function BudgetManager() {
                     {/* Amount Display */}
                     <div className="mt-4 flex items-end justify-between">
                       <div>
-                        <p className="text-sm text-gray-500">Budget limit</p>
-                        <p className="text-2xl font-bold text-gray-900">
+                        <p className="text-xs sm:text-sm text-gray-500">Budget limit</p>
+                        <p className="text-xl sm:text-2xl font-bold text-gray-900">
                           {formatCurrency(budget.amount, userCurrency)}
                         </p>
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => handleEdit(budget)}
                           className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"

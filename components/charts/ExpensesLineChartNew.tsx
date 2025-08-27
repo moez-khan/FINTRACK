@@ -37,8 +37,8 @@ export default function ExpensesLineChartNew({ expenses, period = 'month', curre
           key = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
           break;
         default:
-          // Group by day for monthly view
-          key = formatDate(transaction.date);
+          // Group by day for monthly view - short format for mobile
+          key = new Date(transaction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       }
       
       if (!grouped[key]) {
@@ -66,7 +66,7 @@ export default function ExpensesLineChartNew({ expenses, period = 'month', curre
       net: data.income - data.expense
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-30); // Show last 30 data points
+    .slice(-20); // Show last 20 data points for better mobile display
 
   const chartConfig = {
     income: {
@@ -133,36 +133,39 @@ export default function ExpensesLineChartNew({ expenses, period = 'month', curre
           {getPeriodLabel()} income vs expenses analysis
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px]">
+      <CardContent className="p-2 sm:p-6">
+        <ChartContainer config={chartConfig} className="h-[180px] sm:h-[250px] md:h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
             margin={{
               top: 5,
-              right: 5,
-              left: 5,
-              bottom: 0,
+              right: 10,
+              left: -20,
+              bottom: 20,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis
               dataKey="date"
               stroke="#888888"
-              fontSize={10}
+              fontSize={9}
               tickLine={false}
               axisLine={false}
               interval="preserveStartEnd"
+              angle={-45}
+              textAnchor="end"
+              height={60}
             />
             <YAxis
               stroke="#888888"
-              fontSize={10}
+              fontSize={9}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `${formatCurrency(value, currency, true)}`}
-              width={40}
+              tickFormatter={(value) => formatCurrency(value, currency, true)}
+              width={45}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
             <Line
               type="monotone"
               strokeWidth={2}
@@ -195,7 +198,24 @@ export default function ExpensesLineChartNew({ expenses, period = 'month', curre
               }}
             />
           </LineChart>
+          </ResponsiveContainer>
         </ChartContainer>
+        
+        {/* Custom Legend for better mobile display */}
+        <div className="flex justify-center items-center gap-4 mt-3 text-xs sm:text-sm">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-0.5 bg-[hsl(var(--chart-2))]" />
+            <span className="text-muted-foreground">Income</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-0.5 bg-[hsl(var(--chart-1))]" />
+            <span className="text-muted-foreground">Expenses</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-0.5 border-b-2 border-dashed border-[hsl(var(--chart-3))]" />
+            <span className="text-muted-foreground">Net</span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

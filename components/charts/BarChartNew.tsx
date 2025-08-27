@@ -23,32 +23,50 @@ interface CategoryBarChartProps {
 }
 
 export default function CategoryBarChartNew({ expenses, currency }: CategoryBarChartProps) {
-  // Process data - group by category and sum amounts
-  const categoryData = expenses.reduce((acc, expense) => {
-    const category = expense.category || 'Uncategorized';
-    if (!acc[category]) {
-      acc[category] = 0;
-    }
-    acc[category] += Math.abs(expense.amount); // Use absolute value to handle negative numbers
-    return acc;
-  }, {} as Record<string, number>);
-
-  const sortedCategories = Object.entries(categoryData)
-    .filter(([_, amount]) => amount > 0) // Filter out zero amounts
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 10);
-
-  // If no data, show empty state
-  if (sortedCategories.length === 0) {
+  // If no expenses provided, show empty state early
+  if (!expenses || expenses.length === 0) {
     return (
-      <Card>
+      <Card className="border-0 shadow-none bg-transparent">
         <CardHeader>
           <CardTitle>Top Categories</CardTitle>
           <CardDescription>Spending by category</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-            No data available for the selected period
+          <div className="h-[300px] sm:h-[400px] flex items-center justify-center text-muted-foreground">
+            No expense data available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Process data - group by category and sum amounts
+  const categoryData = expenses
+    .reduce((acc, expense) => {
+    const category = expense.category || 'Uncategorized';
+    if (!acc[category]) {
+      acc[category] = 0;
+    }
+    acc[category] += Math.abs(expense.amount || 0);
+    return acc;
+  }, {} as Record<string, number>);
+
+  const sortedCategories = Object.entries(categoryData)
+    .filter(([_, amount]) => amount > 0)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10);
+
+  // If no categories with positive amounts
+  if (sortedCategories.length === 0) {
+    return (
+      <Card className="border-0 shadow-none bg-transparent">
+        <CardHeader>
+          <CardTitle>Top Categories</CardTitle>
+          <CardDescription>Spending by category</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] sm:h-[400px] flex items-center justify-center text-muted-foreground">
+            No spending data for the selected period
           </div>
         </CardContent>
       </Card>
@@ -56,7 +74,7 @@ export default function CategoryBarChartNew({ expenses, currency }: CategoryBarC
   }
 
   const chartData = sortedCategories.map(([category, amount]) => ({
-    category: category.length > 15 ? category.substring(0, 15) + '...' : category,
+    category: category.length > 12 ? category.substring(0, 12) + '...' : category,
     fullCategory: category,
     amount: Number(amount.toFixed(2)),
   }));
@@ -100,52 +118,43 @@ export default function CategoryBarChartNew({ expenses, currency }: CategoryBarC
   };
 
   return (
-    <Card>
+    <Card className="border-0 shadow-none bg-transparent">
       <CardHeader>
         <CardTitle>Top Categories</CardTitle>
         <CardDescription>Spending by category</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[400px] w-full">
+        <div className="h-[300px] sm:h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              layout="horizontal"
-              margin={{
-                top: 5,
-                right: 30,
-                left: 100,
-                bottom: 5,
-              }}
+              margin={{ top: 20, right: 20, left: 20, bottom: 80 }}
             >
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis 
-                type="number"
-                stroke="#888888"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                domain={[0, maxAmount * 1.1]}
-                tickFormatter={(value) => formatCurrency(value, currency, true)}
+                dataKey="category" 
+                angle={-45}
+                textAnchor="end"
+                height={100}
+                interval={0}
+                tick={{ fontSize: 10 }}
+                stroke="#6b7280"
               />
               <YAxis 
-                dataKey="category"
-                type="category"
-                stroke="#888888"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                width={95}
+                tickFormatter={(value) => {
+                  if (value >= 1000) {
+                    return currency === 'PKR' ? `Rs${(value / 1000).toFixed(0)}k` : `${currency}${(value / 1000).toFixed(0)}k`;
+                  }
+                  return currency === 'PKR' ? `Rs${value}` : `${currency}${value}`;
+                }}
+                tick={{ fontSize: 10 }}
+                stroke="#6b7280"
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar 
-                dataKey="amount" 
-                fill="hsl(var(--chart-1))"
-                radius={[0, 4, 4, 0]}
-              />
+              <Bar dataKey="amount" fill="hsl(var(--chart-1))" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   );
@@ -161,7 +170,7 @@ export function IncomeExpenseComparisonNew({ expenses, currency }: { expenses: E
     if (expense.type === 'income') {
       acc[monthKey].income += expense.amount;
     } else {
-      acc[monthKey].expenses += expense.amount;
+      acc[monthKey].expenses += Math.abs(expense.amount);
     }
     return acc;
   }, {} as Record<string, { income: number, expenses: number }>);
@@ -171,8 +180,8 @@ export function IncomeExpenseComparisonNew({ expenses, currency }: { expenses: E
     .slice(-6)
     .map(([month, data]) => ({
       month: new Date(month + '-01').toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short' 
+        month: 'short',
+        year: 'numeric'
       }),
       income: data.income,
       expenses: data.expenses,
@@ -190,36 +199,46 @@ export function IncomeExpenseComparisonNew({ expenses, currency }: { expenses: E
   };
 
   return (
-    <Card>
+    <Card className="border-0 shadow-none bg-transparent">
       <CardHeader>
         <CardTitle>Income vs Expenses</CardTitle>
         <CardDescription>Monthly comparison</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px]">
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis 
-              dataKey="month"
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis 
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => formatCurrency(value, currency, true)}
-            />
-            <Tooltip 
-              formatter={(value: any) => formatCurrency(value, currency)}
-            />
-            <Legend />
-            <Bar dataKey="income" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="expenses" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-          </BarChart>
+        <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis 
+                dataKey="month"
+                stroke="#888888"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis 
+                stroke="#888888"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => formatCurrency(value, currency, true)}
+                width={60}
+              />
+              <Tooltip 
+                formatter={(value: any) => formatCurrency(value, currency)}
+                contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #e5e7eb', borderRadius: '6px' }}
+              />
+              <Legend 
+                wrapperStyle={{ fontSize: '12px' }}
+                iconSize={12}
+              />
+              <Bar dataKey="income" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expenses" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
     </Card>
@@ -236,7 +255,7 @@ export function MonthlyTrendChartNew({ expenses, currency }: { expenses: Expense
     if (!acc[monthKey]) {
       acc[monthKey] = 0;
     }
-    acc[monthKey] += expense.amount;
+    acc[monthKey] += Math.abs(expense.amount);
     return acc;
   }, {} as Record<string, number>);
 
@@ -246,16 +265,15 @@ export function MonthlyTrendChartNew({ expenses, currency }: { expenses: Expense
 
   const chartData = sortedMonths.map(([month, amount]) => ({
     month: new Date(month + '-01').toLocaleDateString('en-US', { 
-      month: 'short', 
-      year: '2-digit' 
+      month: 'short'
     }),
     amount
   }));
 
-  const average = sortedMonths.reduce((sum, [, amount]) => sum + amount, 0) / sortedMonths.length;
+  const average = sortedMonths.length > 0 ? sortedMonths.reduce((sum, [, amount]) => sum + amount, 0) / sortedMonths.length : 0;
 
   return (
-    <Card>
+    <Card className="border-0 shadow-none bg-transparent">
       <CardHeader>
         <CardTitle>Monthly Expense Trends</CardTitle>
         <CardDescription>Last 12 months spending overview</CardDescription>
@@ -265,32 +283,39 @@ export function MonthlyTrendChartNew({ expenses, currency }: { expenses: Expense
           <p className="text-sm text-muted-foreground">Monthly Average</p>
           <p className="text-2xl font-bold">{formatCurrency(average, currency)}</p>
         </div>
-        <ChartContainer config={{ amount: { label: "Amount", color: "hsl(var(--chart-3))" } }} className="h-[300px]">
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis 
-              dataKey="month"
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis 
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(value) => formatCurrency(value, currency, true)}
-            />
-            <Tooltip 
-              formatter={(value: any) => formatCurrency(value, currency)}
-            />
-            <Bar 
-              dataKey="amount" 
-              fill="hsl(var(--chart-3))"
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
+        <ChartContainer config={{ amount: { label: "Amount", color: "hsl(var(--chart-3))" } }} className="h-[250px] sm:h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis 
+                dataKey="month"
+                stroke="#888888"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis 
+                stroke="#888888"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => formatCurrency(value, currency, true)}
+                width={60}
+              />
+              <Tooltip 
+                formatter={(value: any) => formatCurrency(value, currency)}
+                contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #e5e7eb', borderRadius: '6px' }}
+              />
+              <Bar 
+                dataKey="amount" 
+                fill="hsl(var(--chart-3))"
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
     </Card>

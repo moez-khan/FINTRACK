@@ -48,6 +48,22 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function SpendingPieChartNew({ expenses, currency = 'USD' }: SpendingPieChartProps) {
+  // Function to shorten long category names
+  const shortenCategory = (name: string): string => {
+    const shortened: Record<string, string> = {
+      'Entertainment': 'Entertain.',
+      'Subscriptions': 'Subscribe.',
+      'Emergency Fund': 'Emergency',
+      'Investment': 'Invest.',
+      'Healthcare': 'Health',
+      'Transport': 'Transport',
+      'Insurance': 'Insurance',
+      'Groceries': 'Groceries',
+      'Utilities': 'Utilities',
+      'Shopping': 'Shopping'
+    };
+    return shortened[name] || name;
+  };
   // Separate income and expenses
   const incomeTotal = expenses
     .filter(e => e.type === 'income')
@@ -142,36 +158,41 @@ export default function SpendingPieChartNew({ expenses, currency = 'USD' }: Spen
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+        <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-4">
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">Income</p>
-            <p className="text-lg font-bold text-green-600">
+            <p className="text-xs sm:text-sm text-muted-foreground">Income</p>
+            <p className="text-sm sm:text-lg font-bold text-green-600">
               {formatCurrency(incomeTotal, currency)}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">Expenses</p>
-            <p className="text-lg font-bold text-red-600">
+            <p className="text-xs sm:text-sm text-muted-foreground">Expenses</p>
+            <p className="text-sm sm:text-lg font-bold text-red-600">
               {formatCurrency(totalExpenses, currency)}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">Net</p>
-            <p className={`text-lg font-bold ${netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(netAmount, currency)}
+            <p className="text-xs sm:text-sm text-muted-foreground">Net</p>
+            <p className={`text-sm sm:text-lg font-bold ${netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {netAmount < 0 && '-'}{formatCurrency(Math.abs(netAmount), currency)}
             </p>
           </div>
         </div>
 
-        <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px]">
+        <div className="w-full overflow-hidden">
+        <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
-              outerRadius={80}
+              label={(entry) => {
+                const percent = ((entry.value / totalExpenses) * 100).toFixed(0);
+                return Number(percent) > 5 ? `${percent}%` : '';
+              }}
+              outerRadius="65%"
               fill="#8884d8"
               dataKey="value"
             >
@@ -180,21 +201,35 @@ export default function SpendingPieChartNew({ expenses, currency = 'USD' }: Spen
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              wrapperStyle={{
-                fontSize: '12px',
-                paddingTop: '10px'
-              }}
-              formatter={(value, entry) => {
-                const amount = entry.payload?.value || 0;
-                const percentage = ((amount / totalExpenses) * 100).toFixed(1);
-                return `${value}: ${percentage}%`;
-              }}
-            />
           </PieChart>
+          </ResponsiveContainer>
         </ChartContainer>
+        
+        {/* Custom Legend for better mobile display */}
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2 text-xs">
+          {sortedCategories.slice(0, 6).map(([category, amount]) => {
+            const percentage = ((amount / totalExpenses) * 100).toFixed(1);
+            const displayName = shortenCategory(category);
+            return (
+              <div key={category} className="flex items-center gap-1.5 min-w-0">
+                <div 
+                  className="w-3 h-3 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: CATEGORY_COLORS[category] || '#9CA3AF' }}
+                />
+                <span className="text-muted-foreground whitespace-nowrap">
+                  {displayName}: {percentage}%
+                </span>
+              </div>
+            );
+          })}
+          {sortedCategories.length > 6 && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <div className="w-3 h-3 rounded-full bg-gray-400" />
+              <span>+{sortedCategories.length - 6} more</span>
+            </div>
+          )}
+        </div>
+        </div>
       </CardContent>
     </Card>
   );
