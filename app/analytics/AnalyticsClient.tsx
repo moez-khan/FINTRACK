@@ -411,7 +411,7 @@ export default function AnalyticsClient({ user, initialData }: AnalyticsClientPr
                 <div className="text-center">
                   <p className="text-xs text-gray-500">Net Balance</p>
                   <p className={`text-lg font-semibold ${totalIncome - totalExpenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(totalIncome - totalExpenses, user.currency as Currency, true)}
+                    {totalIncome - totalExpenses < 0 && '-'}{formatCurrency(Math.abs(totalIncome - totalExpenses), user.currency as Currency, true)}
                   </p>
                 </div>
               </div>
@@ -454,7 +454,7 @@ export default function AnalyticsClient({ user, initialData }: AnalyticsClientPr
               <div>
                 <p className="text-sm text-gray-600">Net Balance</p>
                 <p className={`text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(totalIncome - totalExpenses, user.currency as Currency)}
+                  {totalIncome - totalExpenses < 0 && '-'}{formatCurrency(Math.abs(totalIncome - totalExpenses), user.currency as Currency)}
                 </p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">

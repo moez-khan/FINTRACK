@@ -570,7 +570,6 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
                       key={transaction.id}
                       onClick={() => handleEditTransaction(transaction)}
                       className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors">
-                    >
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                         <div className={`p-2 rounded-lg ${getCategoryColor(transaction.category)}`}>
                           {(() => {
@@ -750,8 +749,8 @@ function SummaryCard({ title, amount, color, icon, currency = 'USD' }: {
       {/* Subtle background decoration */}
       <div className={`absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-r ${colorClasses} opacity-5 rounded-full`}></div>
       <p className="text-sm text-gray-600 mb-1">{title}</p>
-      <p className={`text-xl sm:text-2xl font-bold ${textColor}`}>
-        {formatCurrency(Math.abs(amount), currency)}
+      <p className={`text-xl sm:text-2xl font-bold ${amount < 0 ? 'text-red-600' : textColor}`}>
+        {amount < 0 && '-'}{formatCurrency(Math.abs(amount), currency)}
       </p>
     </div>
   );
