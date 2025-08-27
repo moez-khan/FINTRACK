@@ -141,6 +141,9 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       
+      // Get selected financial rule
+      const selectedRule = user.selectedRule || '50-30-20';
+      
       // Filter expenses based on date range
       let filteredExpenses = expenses;
       let dateRangeText = 'All Time';
@@ -240,7 +243,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       doc.setTextColor(0, 0, 0);
       
       // PAGE 1 - EXECUTIVE DASHBOARD
-      let currentY = 75;
+      let currentY = 68;
       
       // Executive Summary Header with rounded corners
       doc.setFillColor(99, 102, 241);
@@ -295,7 +298,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         doc.text(metric.icon, x + cardWidth - 5, currentY + 22);
       });
       
-      currentY += cardHeight + 15;
+      currentY += cardHeight + 8;
       
       // SPENDING ANALYSIS SECTION
       doc.setFillColor(99, 102, 241);
@@ -307,14 +310,29 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       
       currentY += 18;
       
-      // Create spending breakdown table
+      // Create spending breakdown table - limit to 5 categories to prevent overflow
+      const maxCategories = 5; // Reduced from 6 to ensure it fits on page
       const spendingData = sortedCategories.length > 0 
-        ? sortedCategories.slice(0, 6).map(([category, amount]) => {
+        ? sortedCategories.slice(0, maxCategories).map(([category, amount]) => {
             const percentage = filteredExpensesTotal > 0 ? ((amount / filteredExpensesTotal) * 100).toFixed(1) : '0';
             const barWidth = filteredExpensesTotal > 0 ? Math.min(40, (amount / filteredExpensesTotal) * 40) : 0;
             return [category, formatCurrency(amount, user.currency as Currency), `${percentage}%`, barWidth];
           })
         : [['No expenses in period', formatCurrency(0, user.currency as Currency), '0%', 0]];
+      
+      // Add summary row if there are more categories
+      if (sortedCategories.length > maxCategories) {
+        const remainingCategories = sortedCategories.slice(maxCategories);
+        const remainingTotal = remainingCategories.reduce((sum, [, amount]) => sum + amount, 0);
+        const remainingPercentage = filteredExpensesTotal > 0 ? ((remainingTotal / filteredExpensesTotal) * 100).toFixed(1) : '0';
+        const remainingBarWidth = filteredExpensesTotal > 0 ? Math.min(40, (remainingTotal / filteredExpensesTotal) * 40) : 0;
+        spendingData.push([
+          `Others (${remainingCategories.length} categories)`,
+          formatCurrency(remainingTotal, user.currency as Currency),
+          `${remainingPercentage}%`,
+          remainingBarWidth
+        ]);
+      }
       
       // Spending table with visual bars
       if (spendingData.length > 0) {
@@ -353,84 +371,88 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
           }
         }
       });
-        
-        currentY = (doc as any).lastAutoTable.finalY + 15;
-      } else {
-        currentY += 30; // Skip if no data
       }
       
-      // FINANCIAL RULE COMPLIANCE
-      const selectedRule = user.selectedRule || '50-30-20';
+      // Update currentY to the end of the table
+      currentY = (doc as any).lastAutoTable.finalY + 2.5;
+      
+      // Calculate health score based on filtered data
+      let healthScore = 50; // Base score
+      if (filteredBalance > 0) healthScore += 20;
+      if (filteredBalance > filteredIncome * 0.1) healthScore += 10;
+      if (sortedCategories.length > 0 && sortedCategories[0][1] < filteredIncome * 0.3) healthScore += 10;
+      if (filteredExpenses.length > 10) healthScore += 10; // Active tracking
+      healthScore = Math.min(100, healthScore);
+      
+      // Get health status
+      let healthStatus = '';
+      let statusColor = [];
+      if (healthScore >= 80) {
+        healthStatus = 'Excellent';
+        statusColor = [34, 197, 94];
+      } else if (healthScore >= 60) {
+        healthStatus = 'Good';
+        statusColor = [99, 102, 241];
+      } else if (healthScore >= 40) {
+        healthStatus = 'Fair';
+        statusColor = [251, 191, 36];
+      } else {
+        healthStatus = 'Needs Improvement';
+        statusColor = [239, 68, 68];
+      }
+      
+      // Health Score Card with visual indicator
       doc.setFillColor(239, 246, 255);
       doc.rect(15, currentY, pageWidth - 30, 35, 'F');
       
-      doc.setFontSize(11);
+      // Score gauge background
+      const gaugeX = 30;
+      const gaugeY = currentY + 17;
+      const gaugeWidth = 100;
+      const gaugeHeight = 8;
+      
+      // Draw gauge background
+      doc.setFillColor(226, 232, 240);
+      doc.rect(gaugeX, gaugeY, gaugeWidth, gaugeHeight, 'F');
+      
+      // Draw gauge fill based on score
+      const [sc1, sc2, sc3] = statusColor;
+      doc.setFillColor(sc1, sc2, sc3);
+      doc.rect(gaugeX, gaugeY, (healthScore / 100) * gaugeWidth, gaugeHeight, 'F');
+      
+      // Score text
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(30, 58, 138);
-      doc.text(`Active Financial Rule: ${selectedRule.toUpperCase()}`, 20, currentY + 8);
+      doc.text(`${healthScore}/100`, gaugeX + 10, currentY + 13);
       
-      doc.setFontSize(9);
+      // Status text
+      doc.setFontSize(12);
+      doc.setTextColor(sc1, sc2, sc3);
+      doc.text(healthStatus, gaugeX + 60, currentY + 13);
+      
+      // Score breakdown on the right side
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
       
-      if (selectedRule === '50-30-20') {
-        doc.text('• Needs (50%): Housing, utilities, groceries, insurance', 25, currentY + 16);
-        doc.text('• Wants (30%): Entertainment, dining out, hobbies', 25, currentY + 22);
-        doc.text('• Savings (20%): Emergency fund, investments, debt repayment', 25, currentY + 28);
-      } else if (selectedRule === 'pay-yourself-first') {
-        const savingsPercentage = user.savingsPercentage || 20;
-        doc.text(`• Target Savings: ${savingsPercentage}% of income`, 25, currentY + 16);
-        const savingsGoal = filteredIncome > 0 ? filteredIncome * savingsPercentage / 100 : 0;
-        const availableForExpenses = filteredIncome > 0 ? filteredIncome * (100 - savingsPercentage) / 100 : 0;
-        doc.text(`• Period Savings Goal: ${formatCurrency(savingsGoal, user.currency as Currency)}`, 25, currentY + 22);
-        doc.text(`• Available for Expenses: ${formatCurrency(availableForExpenses, user.currency as Currency)}`, 25, currentY + 28);
-      }
+      const breakdownX = 145;
+      const scoreBreakdown = [
+        `Cash Flow: ${filteredBalance > 0 ? '+20' : '0'} pts`,
+        `Savings Rate: ${filteredBalance > filteredIncome * 0.1 ? '+10' : '0'} pts`,
+        `Budget Control: ${sortedCategories.length > 0 && sortedCategories[0][1] < filteredIncome * 0.3 ? '+10' : '0'} pts`,
+        `Active Tracking: ${filteredExpenses.length > 10 ? '+10' : '0'} pts`
+      ];
       
-      currentY += 45;
-      
-      // KEY OBSERVATIONS
-      doc.setFillColor(255, 247, 237);
-      doc.rect(15, currentY, pageWidth - 30, 45, 'F');
-      
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(180, 83, 9);
-      doc.text('KEY OBSERVATIONS & RECOMMENDATIONS', 20, currentY + 8);
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(92, 45, 10);
-      
-      // Generate insights safely
-      const insights = [];
-      try {
-        if (topCategory) {
-          insights.push(`• Highest spending: ${topCategory[0]} (${spendingPercentage}% of expenses)`);
-        }
-        if (filteredBalance < 0) {
-          insights.push(`• Warning: Expenses exceed income by ${formatCurrency(Math.abs(filteredBalance), user.currency as Currency)}`);
-        } else if (filteredBalance > 0) {
-          insights.push(`• Positive cash flow: ${formatCurrency(filteredBalance, user.currency as Currency)} available for savings`);
-        }
-        if (sortedCategories.length > 0 && filteredExpensesTotal > 0) {
-          const avgSpending = filteredExpensesTotal / sortedCategories.length;
-          insights.push(`• Average spending per category: ${formatCurrency(avgSpending, user.currency as Currency)}`);
-        }
-        insights.push(`• Total transactions recorded: ${filteredExpenses.length}`);
-      } catch (insightError) {
-        console.error('Error generating insights:', insightError);
-        insights.push(`• Total transactions recorded: ${filteredExpenses.length}`);
-      }
-      
-      insights.forEach((insight, index) => {
-        doc.text(insight, 25, currentY + 16 + (index * 6));
+      doc.text('Score Breakdown:', breakdownX, currentY + 9);
+      scoreBreakdown.forEach((item, index) => {
+        doc.text(item, breakdownX, currentY + 15 + (index * 5));
       });
       
-      // Add new page for transaction history
+      // ========== PAGE 2 - TRANSACTION HISTORY ==========
       doc.addPage();
       
-      // PAGE 2 - TRANSACTION HISTORY
-      // Add header for second page
+      // Add header for page 2
       doc.setFillColor(99, 102, 241);
       doc.rect(0, 0, pageWidth, 40, 'F');
       
@@ -526,58 +548,95 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         }
       });
       
-      // Add financial health score at bottom of page 2
-      currentY = (doc as any).lastAutoTable.finalY + 15;
+      // ========== PAGE 3 - FINANCIAL RULE & OBSERVATIONS ==========
+      doc.addPage();
       
-      // Financial Health Score Card
+      // Add header for page 3
+      doc.setFillColor(99, 102, 241);
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      
+      // Add accent stripe
+      doc.setFillColor(139, 92, 246);
+      doc.rect(0, 37, pageWidth, 3, 'F');
+      
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text('FINANCIAL RULE & OBSERVATIONS', pageWidth / 2, 18, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Your financial strategy and key insights', pageWidth / 2, 28, { align: 'center' });
+      
+      currentY = 50;
+      
+      // FINANCIAL RULE SECTION
       doc.setFillColor(239, 246, 255);
-      doc.rect(15, currentY, pageWidth - 30, 30, 'F');
-      
-      // Calculate health score based on filtered data
-      let healthScore = 50; // Base score
-      if (filteredBalance > 0) healthScore += 20;
-      if (filteredBalance > filteredIncome * 0.1) healthScore += 10;
-      if (sortedCategories.length > 0 && sortedCategories[0][1] < filteredIncome * 0.3) healthScore += 10;
-      if (filteredExpenses.length > 10) healthScore += 10; // Active tracking
-      healthScore = Math.min(100, healthScore);
-      
-      // Get health status
-      let healthStatus = '';
-      let statusColor = [];
-      if (healthScore >= 80) {
-        healthStatus = 'Excellent';
-        statusColor = [34, 197, 94];
-      } else if (healthScore >= 60) {
-        healthStatus = 'Good';
-        statusColor = [99, 102, 241];
-      } else if (healthScore >= 40) {
-        healthStatus = 'Fair';
-        statusColor = [251, 191, 36];
-      } else {
-        healthStatus = 'Needs Improvement';
-        statusColor = [239, 68, 68];
-      }
+      doc.rect(15, currentY, pageWidth - 30, 35, 'F');
       
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(30, 58, 138);
-      doc.text('Financial Health Score', 25, currentY + 10);
+      doc.text(`Active Financial Rule: ${selectedRule.toUpperCase()}`, 20, currentY + 8);
       
-      // Score display
-      doc.setFontSize(24);
-      const [sc1, sc2, sc3] = statusColor;
-      doc.setTextColor(sc1, sc2, sc3);
-      doc.text(`${healthScore}`, 25, currentY + 22);
-      
-      doc.setFontSize(11);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
-      doc.text(`/ 100`, 45, currentY + 22);
       
-      doc.setFontSize(10);
+      if (selectedRule === '50-30-20') {
+        doc.text('• Needs (50%): Housing, utilities, groceries, insurance', 25, currentY + 16);
+        doc.text('• Wants (30%): Entertainment, dining out, hobbies', 25, currentY + 22);
+        doc.text('• Savings (20%): Emergency fund, investments, debt repayment', 25, currentY + 28);
+      } else if (selectedRule === 'pay-yourself-first') {
+        const savingsPercentage = user.savingsPercentage || 20;
+        doc.text(`• Target Savings: ${savingsPercentage}% of income`, 25, currentY + 16);
+        const savingsGoal = filteredIncome > 0 ? filteredIncome * savingsPercentage / 100 : 0;
+        const availableForExpenses = filteredIncome > 0 ? filteredIncome * (100 - savingsPercentage) / 100 : 0;
+        doc.text(`• Period Savings Goal: ${formatCurrency(savingsGoal, user.currency as Currency)}`, 25, currentY + 22);
+        doc.text(`• Available for Expenses: ${formatCurrency(availableForExpenses, user.currency as Currency)}`, 25, currentY + 28);
+      }
+      
+      currentY += 45;
+      
+      // KEY OBSERVATIONS
+      doc.setFillColor(255, 247, 237);
+      doc.rect(15, currentY, pageWidth - 30, 45, 'F');
+      
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(sc1, sc2, sc3);
-      doc.text(healthStatus, 80, currentY + 22);
+      doc.setTextColor(180, 83, 9);
+      doc.text('KEY OBSERVATIONS & RECOMMENDATIONS', 20, currentY + 8);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(92, 45, 10);
+      
+      // Generate insights safely
+      const insights = [];
+      try {
+        if (topCategory) {
+          insights.push(`• Highest spending: ${topCategory[0]} (${spendingPercentage}% of expenses)`);
+        }
+        if (filteredBalance < 0) {
+          insights.push(`• Warning: Expenses exceed income by ${formatCurrency(Math.abs(filteredBalance), user.currency as Currency)}`);
+        } else if (filteredBalance > 0) {
+          insights.push(`• Positive cash flow: ${formatCurrency(filteredBalance, user.currency as Currency)} available for savings`);
+        }
+        if (sortedCategories.length > 0 && filteredExpensesTotal > 0) {
+          const avgSpending = filteredExpensesTotal / sortedCategories.length;
+          insights.push(`• Average spending per category: ${formatCurrency(avgSpending, user.currency as Currency)}`);
+        }
+        insights.push(`• Total transactions recorded: ${filteredExpenses.length}`);
+      } catch (insightError) {
+        console.error('Error generating insights:', insightError);
+        insights.push(`• Total transactions recorded: ${filteredExpenses.length}`);
+      }
+      
+      // Limit insights display to prevent overflow
+      const maxInsights = Math.min(insights.length, 5); // Max 5 lines to fit in box
+      insights.slice(0, maxInsights).forEach((insight, index) => {
+        doc.text(insight, 25, currentY + 16 + (index * 6));
+      });
       
       // Professional footer for all pages
       const pageCount = doc.internal.getNumberOfPages();
