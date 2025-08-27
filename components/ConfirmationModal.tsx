@@ -62,13 +62,13 @@ export default function ConfirmationModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
-        <div className="flex items-start space-x-4">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-md animate-in fade-in zoom-in duration-200">
+        <div className="flex items-start space-x-3 sm:space-x-4">
           <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full ${styles.iconBg}`}>
             {styles.icon}
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
               {title}
             </h3>
             <p className="text-sm text-gray-600">
@@ -77,11 +77,11 @@ export default function ConfirmationModal({
           </div>
         </div>
         
-        <div className="flex justify-end space-x-3 mt-6">
+        <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-6">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
             {cancelText}
           </button>
@@ -91,7 +91,7 @@ export default function ConfirmationModal({
               onConfirm();
               onClose();
             }}
-            className={`px-4 py-2 text-white rounded-lg transition-colors ${styles.confirmBtn}`}
+            className={`w-full sm:w-auto px-4 py-2 text-white rounded-lg transition-colors ${styles.confirmBtn}`}
           >
             {confirmText}
           </button>

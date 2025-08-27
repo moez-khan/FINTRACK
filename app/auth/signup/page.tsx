@@ -274,8 +274,8 @@ export default function SignUp() {
         </svg>
       </div>
 
-      <div className="max-w-md w-full relative z-10 px-4 max-h-[90vh] overflow-y-auto">
-        <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-8 relative">
+      <div className="max-w-md w-full relative z-10 px-4 max-h-[95vh] overflow-y-auto">
+        <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-6 sm:p-8 relative">
           {/* Close button */}
           <button
             onClick={() => router.push('/')}
@@ -306,7 +306,7 @@ export default function SignUp() {
               </svg>
             </div>
             
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
               Join FinTrack Today
             </h2>
             <p className="text-sm text-gray-600">
@@ -314,7 +314,7 @@ export default function SignUp() {
             </p>
           </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-3 sm:space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name

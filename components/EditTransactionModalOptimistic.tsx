@@ -196,8 +196,8 @@ export default function EditTransactionModalOptimistic({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
             {transaction ? 'Edit Transaction' : 'Add Transaction'}
           </h2>
 
@@ -207,7 +207,7 @@ export default function EditTransactionModalOptimistic({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             {/* Transaction Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

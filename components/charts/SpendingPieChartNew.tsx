@@ -142,7 +142,7 @@ export default function SpendingPieChartNew({ expenses, currency = 'USD' }: Spen
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 grid grid-cols-3 gap-4">
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Income</p>
             <p className="text-lg font-bold text-green-600">
@@ -163,7 +163,7 @@ export default function SpendingPieChartNew({ expenses, currency = 'USD' }: Spen
           </div>
         </div>
 
-        <ChartContainer config={chartConfig} className="h-[300px]">
+        <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px]">
           <PieChart>
             <Pie
               data={data}
@@ -183,6 +183,10 @@ export default function SpendingPieChartNew({ expenses, currency = 'USD' }: Spen
             <Legend 
               verticalAlign="bottom" 
               height={36}
+              wrapperStyle={{
+                fontSize: '12px',
+                paddingTop: '10px'
+              }}
               formatter={(value, entry) => {
                 const amount = entry.payload?.value || 0;
                 const percentage = ((amount / totalExpenses) * 100).toFixed(1);

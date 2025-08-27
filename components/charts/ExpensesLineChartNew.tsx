@@ -134,13 +134,13 @@ export default function ExpensesLineChartNew({ expenses, period = 'month', curre
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px]">
+        <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px]">
           <LineChart
             data={chartData}
             margin={{
               top: 5,
-              right: 10,
-              left: 10,
+              right: 5,
+              left: 5,
               bottom: 0,
             }}
           >
@@ -148,16 +148,18 @@ export default function ExpensesLineChartNew({ expenses, period = 'month', curre
             <XAxis
               dataKey="date"
               stroke="#888888"
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               axisLine={false}
+              interval="preserveStartEnd"
             />
             <YAxis
               stroke="#888888"
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => `${formatCurrency(value, currency, true)}`}
+              width={40}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />

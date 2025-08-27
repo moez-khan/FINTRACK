@@ -234,14 +234,14 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       const periodIncome = usePeriod ? ruleData.totalBudget : monthlyIncome;
       
       return (
-        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">
+        <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6">
             <h3 className="text-xl font-bold text-white">50/30/20 Budget Rule</h3>
             <p className="text-white/80 text-sm mt-1">
               {usePeriod && 'period' in ruleData ? (ruleData as any).period.label + ' Income' : 'Monthly Income'}: {formatCurrency(periodIncome, user.currency as Currency)}
             </p>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             <ProgressBar
               label="Needs (50%)"
               current={ruleData.spending.needs}
@@ -301,7 +301,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       const periodIncome = usePeriod && 'periodIncome' in ruleData ? ruleData.periodIncome : monthlyIncome;
       
       return (
-        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-green-500 to-teal-600 p-6">
             <h3 className="text-xl font-bold text-white">Pay Yourself First</h3>
             <p className="text-white/80 text-sm mt-1">
@@ -356,7 +356,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
 
       if (!primaryGoal) {
         return (
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
             <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6">
               <h3 className="text-xl font-bold text-white">SMART Goals</h3>
             </div>
@@ -379,7 +379,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       const goalData = calculateSmartGoal(primaryGoal as any, primaryGoal.saved, monthlyIncome);
       
       return (
-        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6">
             <h3 className="text-xl font-bold text-white">SMART Goal: {goalData.goalName}</h3>
             <p className="text-white/80 text-sm mt-1">
@@ -432,7 +432,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-x-hidden">
       <ToastProvider />
       
       {/* Animated background */}
@@ -457,9 +457,9 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
       />
 
       {/* Main Content - Responsive Layout */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 w-full px-3 sm:px-4 md:px-6 lg:max-w-7xl lg:mx-auto py-4 sm:py-6 lg:py-8">
         {/* Summary Cards - Top */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <SummaryCard title="Total Income" amount={totalIncome} color="green" icon="💰" currency={user.currency as Currency} />
           <SummaryCard title="Total Expenses" amount={totalExpenses} color="red" icon="💳" currency={user.currency as Currency} />
           <SummaryCard title="Net Balance" amount={balance} color="blue" icon="📊" currency={user.currency as Currency} />
@@ -467,7 +467,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         </div>
 
         {/* Charts Section - Middle */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Expenses Line Chart */}
           <ExpensesLineChartNew expenses={expenses} period={chartPeriod} currency={user.currency as Currency} />
           
@@ -506,24 +506,24 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         />
 
         {/* Financial Rule Widget */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           {renderFinancialRuleWidget()}
         </div>
 
         {/* Period Analytics */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <PeriodAnalytics currency={user.currency as Currency || 'USD'} />
         </div>
 
         {/* Bill Reminders Section */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <BillReminderManager />
         </div>
 
         {/* Collapsible Forms Section */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-4 mb-6 sm:mb-8">
           {/* Add Transaction Form */}
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
             <button
               onClick={() => setShowAddTransaction(!showAddTransaction)}
               className="w-full px-6 py-4 bg-gradient-to-r from-indigo-500 to-blue-600 text-white flex justify-between items-center hover:from-indigo-600 hover:to-blue-700 transition-colors"
@@ -554,13 +554,13 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
         </div>
 
         {/* Tables Section - Bottom */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Recent Transactions */}
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-500 to-blue-600 p-6">
-              <h3 className="text-xl font-bold text-white">Recent Transactions</h3>
+          <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-500 to-blue-600 p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold text-white">Recent Transactions</h3>
             </div>
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               {recentTransactions.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">No transactions yet</p>
               ) : (
@@ -569,9 +569,9 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
                     <div
                       key={transaction.id}
                       onClick={() => handleEditTransaction(transaction)}
-                      className="flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors"
+                      className="flex justify-between items-center p-2 sm:p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors">
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                         <div className={`p-2 rounded-lg ${getCategoryColor(transaction.category)}`}>
                           {(() => {
                             const Icon = getCategoryIcon(transaction.category, transaction.type as 'income' | 'expense');
@@ -579,11 +579,11 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
                           })()}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{transaction.category}</p>
+                          <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{transaction.category}</p>
                           <p className="text-xs text-gray-500">{formatDate(transaction.date)}</p>
                         </div>
                       </div>
-                      <span className={`font-semibold ${
+                      <span className={`font-semibold text-sm sm:text-base flex-shrink-0 ${
                         transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, user.currency as Currency)}
@@ -596,9 +596,9 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
           </div>
 
           {/* Saving Goals */}
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-white">Saving Goals</h3>
+          <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-4 sm:p-6 flex justify-between items-center">
+              <h3 className="text-lg sm:text-xl font-bold text-white">Saving Goals</h3>
               <button
                 onClick={() => {
                   setEditingGoal(null);
@@ -618,7 +618,7 @@ export default function DashboardClient({ user: initialUser, initialData }: Dash
                 <div className="absolute -inset-1 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </button>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-3 sm:p-4 space-y-3">
               {savingGoals.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">No saving goals yet</p>
               ) : (
@@ -726,10 +726,10 @@ function SummaryCard({ title, amount, color, icon, currency = 'USD' }: {
   }[color] || 'text-gray-600';
 
   return (
-    <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-6 relative overflow-hidden">
+    <div className="bg-white/90 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl p-3 sm:p-4 lg:p-6 relative overflow-hidden">
       <div className="flex items-center justify-between mb-2">
-        <div className={`w-12 h-12 bg-gradient-to-r ${colorClasses} rounded-xl flex items-center justify-center shadow-lg`}>
-          <span className="text-xl text-white">{icon}</span>
+        <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r ${colorClasses} rounded-xl flex items-center justify-center shadow-lg`}>
+          <span className="text-lg sm:text-xl text-white">{icon}</span>
         </div>
         <div className={`w-8 h-8 bg-gradient-to-r ${colorClasses} rounded-lg flex items-center justify-center shadow-md`}>
           <svg 
@@ -750,7 +750,7 @@ function SummaryCard({ title, amount, color, icon, currency = 'USD' }: {
       {/* Subtle background decoration */}
       <div className={`absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-r ${colorClasses} opacity-5 rounded-full`}></div>
       <p className="text-sm text-gray-600 mb-1">{title}</p>
-      <p className={`text-2xl font-bold ${textColor}`}>
+      <p className={`text-xl sm:text-2xl font-bold ${textColor}`}>
         {formatCurrency(Math.abs(amount), currency)}
       </p>
     </div>

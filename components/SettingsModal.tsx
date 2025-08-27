@@ -94,9 +94,9 @@ export default function SettingsModal({ isOpen, onClose, user, defaultTab = 'not
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-4xl mx-4 transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
                 {/* Modal Header with Gradient */}
-                <div className="relative bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-6">
+                <div className="relative bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4 sm:p-6">
                   {/* Animated background pattern */}
                   <div className="absolute inset-0 overflow-hidden">
                     <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-2xl animate-pulse"></div>

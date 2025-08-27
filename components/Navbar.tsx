@@ -55,21 +55,21 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
   return (
     <>
     <nav className="relative z-50 bg-white/95 backdrop-blur-lg shadow-sm border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:max-w-7xl lg:mx-auto">
+        <div className="flex justify-between items-center h-16">
           {/* Logo and Desktop Navigation */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <BanknotesIcon className="w-6 h-6 text-white" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <BanknotesIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap">
                 FinTrack
               </span>
             </Link>
 
             {/* Desktop Navigation Links */}
-            <div className="hidden md:ml-8 md:flex md:space-x-4">
+            <div className="hidden lg:ml-8 lg:flex lg:space-x-4">
               {navigation.map((item) => (
                 <button
                   key={item.name}
@@ -93,7 +93,7 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
             <NotificationBell />
             
             {/* Desktop User Info */}
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden lg:flex items-center space-x-4">
               <button
                 onClick={onOpenProfile}
                 className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -113,7 +113,7 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-50"
+              className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
             >
               {mobileMenuOpen ? (
                 <XMarkIcon className="w-6 h-6" />
@@ -127,7 +127,7 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
 
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden absolute top-16 inset-x-0 bg-white shadow-lg border-b">
+        <div className="lg:hidden absolute top-16 inset-x-0 bg-white/95 backdrop-blur-lg shadow-lg border-b border-gray-200 z-40">
           <div className="px-4 py-4 space-y-2">
             {navigation.map((item) => (
               <button
@@ -136,7 +136,7 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
                 className={`w-full px-3 py-3 rounded-lg text-left font-medium transition-colors flex items-center space-x-3 ${
                   pathname === item.href
                     ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
