@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   description: "Track your expenses and manage your finances",
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: '/apple-icon.png',
   },
