@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { BellIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect, useRef } from 'react';
+import { BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { BellIcon as BellSolidIcon } from '@heroicons/react/24/solid';
 
 interface Notification {
@@ -20,10 +20,26 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const startY = useRef(0);
+  const currentY = useRef(0);
 
   useEffect(() => {
     fetchNotifications();
   }, []);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen]);
 
   const fetchNotifications = async () => {
     try {
@@ -111,85 +127,162 @@ export default function NotificationBell() {
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-lg"
-      >
-        {unreadCount > 0 ? (
-          <BellSolidIcon className="h-6 w-6 text-indigo-600" />
-        ) : (
-          <BellIcon className="h-6 w-6" />
-        )}
-        
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-      </button>
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startY.current = e.touches[0].clientY;
+    currentY.current = e.touches[0].clientY;
+  };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    currentY.current = e.touches[0].clientY;
+    const diff = currentY.current - startY.current;
+    
+    // Only allow dragging down to close
+    if (diff > 0 && panelRef.current) {
+      panelRef.current.style.transform = `translateY(${Math.min(diff, 300)}px)`;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const diff = currentY.current - startY.current;
+    
+    if (diff > 50) {
+      setIsOpen(false);
+    }
+    
+    if (panelRef.current) {
+      panelRef.current.style.transform = '';
+      panelRef.current.style.transition = 'transform 0.2s ease-out';
+      setTimeout(() => {
+        if (panelRef.current) {
+          panelRef.current.style.transition = '';
+        }
+      }, 200);
+    }
+  };
+
+  return (
+    <>
+      {/* Notification Button Container */}
+      <div className="relative">
+        {/* Extra padding container for badge space */}
+        <div className="pt-1 pr-1">
+          {/* Button with icon */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="relative block p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-lg transition-colors"
+            aria-label="Notifications"
+            aria-expanded={isOpen}
+            aria-haspopup="true"
+          >
+            {unreadCount > 0 ? (
+              <BellSolidIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
+            ) : (
+              <BellIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+            )}
+          </button>
+          
+          {/* Badge positioned absolutely to the container */}
+          {unreadCount > 0 && (
+            <div className="absolute top-0 right-0 -mt-0.5 -mr-0.5">
+              <span className="flex h-4 w-4 sm:h-5 sm:w-5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 sm:h-5 sm:w-5 bg-red-500 items-center justify-center">
+                  <span className="text-[10px] sm:text-xs text-white font-medium">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                </span>
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Notification Panel */}
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-[100] bg-black/20 sm:bg-transparent"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-20 max-h-96 overflow-hidden">
-            <div className="p-4 border-b border-gray-200">
+          <div 
+            ref={panelRef}
+            className="fixed sm:absolute left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 top-20 sm:top-full sm:mt-3 w-full sm:w-96 md:w-[28rem] bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 z-[101] overflow-hidden flex flex-col h-auto sm:h-auto max-h-[calc(100vh-5rem)] sm:max-h-[28rem]"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Mobile drag indicator */}
+            <div className="sm:hidden flex justify-center pt-2 pb-1">
+              <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+            </div>
+            
+            <div className="p-3 sm:p-4 border-b border-gray-200 bg-white">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Notifications</h3>
-                {unreadCount > 0 && (
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Notifications</h3>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+                    >
+                      Mark all read
+                    </button>
+                  )}
                   <button
-                    onClick={markAllAsRead}
-                    className="text-sm text-indigo-600 hover:text-indigo-500"
+                    onClick={() => setIsOpen(false)}
+                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                    aria-label="Close notifications"
                   >
-                    Mark all read
+                    <XMarkIcon className="h-5 w-5 text-gray-500" />
                   </button>
-                )}
+                </div>
               </div>
             </div>
 
-            <div className="max-h-80 overflow-y-auto">
+            <div className={`overflow-y-auto bg-white ${notifications.length > 5 ? 'max-h-[320px]' : ''}`}>
               {loading ? (
-                <div className="p-4 text-center text-gray-500">Loading...</div>
+                <div className="p-4 text-center text-gray-500 text-sm bg-white">Loading...</div>
               ) : notifications.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  No notifications yet
+                <div className="p-8 sm:p-12 text-center text-gray-500 text-sm bg-white">
+                  <BellIcon className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium text-gray-700">No notifications yet</p>
+                  <p className="text-xs mt-1 text-gray-400">We'll notify you when something important happens</p>
                 </div>
               ) : (
-                notifications.map((notification) => (
+                notifications.map((notification, index) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                      !notification.isRead ? 'bg-blue-50' : ''
+                    className={`p-3 sm:p-4 ${index < notifications.length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-all duration-150 ${
+                      !notification.isRead ? 'bg-blue-50 hover:bg-blue-100/50' : ''
                     }`}
                     onClick={() => {
+                      if ('vibrate' in navigator && window.innerWidth < 640) {
+                        navigator.vibrate(10);
+                      }
                       if (!notification.isRead) {
                         markAsRead([notification.id]);
                       }
                     }}
                   >
-                    <div className="flex items-start space-x-3">
+                    <div className="flex items-start space-x-2.5 sm:space-x-3">
                       <div className="flex-shrink-0">
-                        <span className="text-lg">
+                        <span className="text-base sm:text-lg">
                           {getTypeIcon(notification.type)}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className={`text-sm font-medium ${getPriorityColor(notification.priority)}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-xs sm:text-sm font-medium ${getPriorityColor(notification.priority)} line-clamp-2`}>
                             {notification.title}
                           </p>
                           {!notification.isRead && (
-                            <div className="w-2 h-2 bg-indigo-600 rounded-full flex-shrink-0"></div>
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-indigo-600 rounded-full flex-shrink-0 mt-1"></div>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-[10px] sm:text-xs text-gray-400 mt-1">
                           {formatTimeAgo(notification.createdAt)}
                         </p>
                       </div>
@@ -199,22 +292,9 @@ export default function NotificationBell() {
               )}
             </div>
 
-            {notifications.length > 0 && (
-              <div className="p-3 border-t border-gray-200">
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    // Could navigate to full notifications page
-                  }}
-                  className="w-full text-center text-sm text-indigo-600 hover:text-indigo-500"
-                >
-                  View all notifications
-                </button>
-              </div>
-            )}
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }

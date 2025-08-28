@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   HomeIcon,
@@ -31,6 +31,7 @@ interface NavbarProps {
 
 export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfile }: NavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -47,16 +48,16 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
       item.action();
       setMobileMenuOpen(false);
     } else if (item.href && item.href !== '#') {
-      window.location.href = item.href;
+      router.push(item.href);
       setMobileMenuOpen(false);
     }
   };
 
   return (
     <>
-    <nav className="relative z-50 bg-white/95 backdrop-blur-lg shadow-sm border-b border-gray-100">
-      <div className="w-full px-3 sm:px-4 md:px-6 lg:max-w-7xl lg:mx-auto">
-        <div className="flex justify-between items-center h-16">
+    <nav className="relative z-30 bg-white/95 backdrop-blur-lg shadow-sm border-b border-gray-100 overflow-visible">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:max-w-7xl lg:mx-auto overflow-visible">
+        <div className="flex justify-between items-center h-16 overflow-visible">
           {/* Logo and Desktop Navigation */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
@@ -88,9 +89,11 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 overflow-visible">
             {/* Notification Bell */}
-            <NotificationBell />
+            <div className="overflow-visible">
+              <NotificationBell />
+            </div>
             
             {/* Desktop User Info */}
             <div className="hidden lg:flex items-center space-x-4">
@@ -127,7 +130,7 @@ export default function Navbar({ user, onAddTransaction, onAddGoal, onOpenProfil
 
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden absolute top-16 inset-x-0 bg-white/95 backdrop-blur-lg shadow-lg border-b border-gray-200 z-40">
+        <div className="lg:hidden absolute top-16 inset-x-0 bg-white/95 backdrop-blur-lg shadow-lg border-b border-gray-200 z-20">
           <div className="px-4 py-4 space-y-2">
             {navigation.map((item) => (
               <button
